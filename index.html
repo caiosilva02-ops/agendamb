@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agenda Digital — Firebase (Compartilhada) — Melhorada</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#071022; --card:#0b1220; --accent1:#7c3aed; --accent2:#06b6d4; --muted:#94a3b8; --success:#16a34a; --danger:#ef4444 }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071022 0%, #071730 60%);color:#e6eef8;margin:0;min-height:100vh}
+    .app{max-width:1200px;margin:20px auto;padding:18px}
+    header{display:flex;align-items:center;gap:12px}
+    .brand{font-weight:800;font-size:20px}
+    .tag{font-size:13px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:380px 1fr 320px;gap:18px;margin-top:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+    textarea{min-height:90px}
+    .row{display:flex;gap:10px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:0;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:700}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .small{padding:8px 10px;font-size:13px}
+    .events-list{display:grid;gap:10px;margin-top:10px}
+    .event{display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));align-items:center}
+    .meta{display:flex;gap:12px;align-items:center}
+    .date-chip{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:8px 10px;border-radius:8px;text-align:center;min-width:84px}
+    .title{font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* toast */
+    .toast-wrap{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+    .toast{min-width:240px;padding:12px 14px;border-radius:10px;color:white;box-shadow:0 6px 20px rgba(2,6,23,0.6);font-weight:600}
+    .toast.success{background:var(--success)}
+    .toast.error{background:var(--danger)}
+    .toast.info{background:#0f1724;border:1px solid rgba(255,255,255,0.06)}
+
+    .activity-list{max-height:360px;overflow:auto;padding-top:8px}
+    .activity{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:13px}
+    .empty{color:var(--muted);padding:12px}
+
+    @media(max-width:1100px){.grid{grid-template-columns:1fr;}.brand{font-size:18px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="brand">Agenda Digital — Compartilhada</div>
+        <div class="tag">Firestore • notificações • histórico de atividade</div>
+      </div>
+
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <div id="userInfo" class="muted" style="font-size:13px">Conectando…</div>
+        <button id="signBtn" class="btn btn-ghost small">Entrar</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Form -->
+      <div>
+        <div class="card">
+          <h3 style="margin:0 0 10px 0">Criar / Editar evento</h3>
+          <form id="eventForm">
+            <label>Nome do evento</label>
+            <input id="title" placeholder="Ex: Reunião com equipe" required />
+
+            <div style="height:8px"></div>
+            <div class="row">
+              <div>
+                <label>Data</label>
+                <input id="date" type="date" required />
+              </div>
+              <div>
+                <label>Horário</label>
+                <input id="time" type="time" required />
+              </div>
+            </div>
+
+            <div style="height:8px"></div>
+            <label>Nome do criador</label>
+            <input id="creator" placeholder="Seu nome (pode ser preenchido automaticamente)" />
+
+            <div style="height:8px"></div>
+            <label>Observações</label>
+            <textarea id="notes" placeholder="Detalhes do evento"></textarea>
+
+            <div style="height:12px"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" type="submit">Salvar evento</button>
+              <button type="button" id="resetBtn" class="btn btn-ghost small">Limpar</button>
+            </div>
+
+            <input type="hidden" id="editingId" />
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h4 style="margin:0 0 10px 0">Exportar / Importar</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="exportJSON" class="btn btn-primary small">Exportar JSON</button>
+            <button id="importJSONBtn" class="btn btn-ghost small">Importar JSON</button>
+            <input id="importFile" type="file" accept="application/json" style="display:none" />
+            <button id="clearAll" class="btn btn-ghost small">Remover todos (Firestore)</button>
+            <button id="testPdfBtn" class="btn btn-ghost small">Verificar lib PDF</button>
+          </div>
+          <p class="muted" style="margin-top:10px">Dica: se estiver usando local (file://) e o PDF não gerar, abra via servidor (localhost) ou hospede o arquivo.</p>
+        </div>
+      </div>
+
+      <!-- Lista central -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Eventos</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="search" placeholder="Pesquisar por título, criador ou observação" style="padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);min-width:240px" />
+              <button id="pdfBtn" class="btn btn-primary small">Gerar PDF (intervalo)</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="margin:0 6px 0 0" class="muted">De</label>
+              <input id="fromDate" type="date" />
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="margin:0 6px 0 0" class="muted">Até</label>
+              <input id="toDate" type="date" />
+            </div>
+            <button id="filterBtn" class="btn btn-ghost small">Aplicar filtro</button>
+            <button id="clearFilter" class="btn btn-ghost small">Limpar filtro</button>
+          </div>
+
+          <div class="events-list" id="eventsList"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;text-align:center">
+          <div id="stats" class="muted">Carregando estatísticas…</div>
+        </div>
+      </div>
+
+      <!-- Painel direito: atividade recente e logs -->
+      <div>
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Atividades recentes</h4>
+          <div class="activity-list" id="activityList">
+            <div class="empty">Nenhuma atividade</div>
+          </div>
+          <div style="margin-top:10px;text-align:center"><button id="refreshActivity" class="btn btn-ghost small">Atualizar</button></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h4 style="margin:0 0 8px 0">Ajuda rápida</h4>
+          <div class="muted" style="font-size:13px">Problemas com <strong>Login Google</strong>? Adicione <code>localhost</code> nas credenciais do Firebase (Authentication → Domains autorizados).</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Feito com ♥ — substitua <code>firebaseConfig</code> pelas credenciais do seu projeto Firebase</footer>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ---------------- CONFIGURE AQUI ----------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
+      authDomain: "agendadigital-44dc9.firebaseapp.com",
+      projectId: "agendadigital-44dc9",
+      storageBucket: "agendadigital-44dc9.firebasestorage.app",
+      messagingSenderId: "569121363405",
+      appId: "1:569121363405:web:1c7ab280393c090c40a084"
+    }
+
+    // init
+    firebase.initializeApp(firebaseConfig)
+    const auth = firebase.auth()
+    const db = firebase.firestore()
+
+    // DOM refs
+    const form = document.getElementById('eventForm')
+    const titleI = document.getElementById('title')
+    const dateI = document.getElementById('date')
+    const timeI = document.getElementById('time')
+    const creatorI = document.getElementById('creator')
+    const notesI = document.getElementById('notes')
+    const editingId = document.getElementById('editingId')
+    const eventsList = document.getElementById('eventsList')
+    const searchI = document.getElementById('search')
+    const fromDate = document.getElementById('fromDate')
+    const toDate = document.getElementById('toDate')
+    const userInfo = document.getElementById('userInfo')
+    const signBtn = document.getElementById('signBtn')
+    const toastWrap = document.getElementById('toastWrap')
+    const activityList = document.getElementById('activityList')
+    const stats = document.getElementById('stats')
+
+    // collections
+    const col = db.collection('events')
+    const logCol = db.collection('events_log')
+
+    // helpers
+    function uid(){return 'id-' + Math.random().toString(36).slice(2,9)}
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+    function formatDate(d){ const dt = new Date(d); return dt.toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) }
+    function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x }
+    function endOfDay(d){ const x = new Date(d); x.setHours(23,59,59,999); return x }
+    function truncate(s,n){ return s && s.length>n? s.slice(0,n-1)+'…': (s||'') }
+
+    function showToast(text, type='info', ms=4200){
+      const el = document.createElement('div'); el.className = 'toast '+(type==='success'?'success': type==='error'?'error':'info'); el.textContent = text
+      toastWrap.appendChild(el)
+      setTimeout(()=>{ el.style.opacity = '0'; setTimeout(()=>el.remove(),500) }, ms)
+    }
+
+    // AUTH
+    let currentUser = null
+    auth.onAuthStateChanged(user=>{
+      currentUser = user
+      if(user){
+        const display = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email || 'Usuário')
+        userInfo.textContent = display
+        signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair'
+        if(!creatorI.value) creatorI.value = display
+        showToast('Autenticado: '+display, 'success', 2000)
+      } else {
+        userInfo.textContent = 'Desconectado'
+        signBtn.textContent = 'Entrar'
+      }
+    })
+
+    // try to ensure anonymous sign-in for public write
+    (async function ensureAnon(){ try{ if(!auth.currentUser) await auth.signInAnonymously() }catch(e){ console.error(e); showToast('Erro autenticação anônima: '+e.message,'error') } })()
+
+    signBtn.addEventListener('click', async ()=>{
+      if(currentUser && !currentUser.isAnonymous){ // sign out
+        await auth.signOut()
+        await auth.signInAnonymously()
+        showToast('Desconectado. Autenticado anonimamente.', 'info')
+        return
+      }
+
+      // Google sign-in
+      const provider = new firebase.auth.GoogleAuthProvider()
+      try{
+        await auth.signInWithPopup(provider)
+      }catch(err){
+        console.error('Google login error', err)
+        showToast('Erro login Google: '+err.message, 'error', 6000)
+        // Give helpful hint
+        if(err.code === 'auth/unauthorized-domain' || err.message && err.message.includes('auth/unauthorized-domain')){
+          showToast('Domínio não autorizado: adicione "localhost" nas credenciais do Firebase (Auth -> Domains).', 'error', 8000)
+        }
+      }
+    })
+
+    // real-time listener for events
+    let liveUnsub = null
+    function startListener(){
+      if(liveUnsub) liveUnsub()
+      liveUnsub = col.orderBy('date').orderBy('time').onSnapshot(snapshot=>{
+        const docs = []
+        snapshot.forEach(doc=>{ const d = doc.data(); d.id = doc.id; docs.push(d) })
+        window.__allEvents = docs
+        render(docs)
+        updateStats(docs)
+      }, err=>{ console.error('Listener error', err); showToast('Erro listener: '+err.message,'error') })
+    }
+    startListener()
+
+    // listen activity log
+    let logUnsub = null
+    function startLogListener(){
+      if(logUnsub) logUnsub()
+      logUnsub = logCol.orderBy('createdAt','desc').limit(12).onSnapshot(snapshot=>{
+        const items = []
+        snapshot.forEach(doc=>{ const d = doc.data(); d.id = doc.id; items.push(d) })
+        renderActivity(items)
+      })
+    }
+    startLogListener()
+
+    function renderActivity(items){
+      activityList.innerHTML = ''
+      if(!items.length){ activityList.innerHTML = '<div class="empty">Nenhuma atividade</div>'; return }
+      items.forEach(it=>{
+        const el = document.createElement('div'); el.className='activity'
+        const when = it.createdAt && it.createdAt.toDate ? it.createdAt.toDate() : (it.createdAt? new Date(it.createdAt): new Date())
+        el.innerHTML = `<div style="font-weight:700">${escapeHtml(it.action || '—')} — ${escapeHtml(it.title || '')}</div>
+          <div class="muted">por ${escapeHtml(it.user||'—')} • ${when.toLocaleString('pt-BR')}</div>`
+        activityList.appendChild(el)
+      })
+    }
+
+    document.getElementById('refreshActivity').addEventListener('click', ()=> startLogListener())
+
+    function updateStats(docs){
+      stats.textContent = `${docs.length} evento(s) no sistema — último: ${docs.length? formatDate(docs[docs.length-1].date) : '—'}`
+    }
+
+    // render events
+    function render(allEvents){
+      const events = allEvents || window.__allEvents || []
+      const q = searchI.value.trim().toLowerCase()
+      const from = fromDate.value ? new Date(fromDate.value) : null
+      const to = toDate.value ? new Date(toDate.value) : null
+
+      const filtered = events.filter(ev=>{
+        if(q){ const hay = (ev.title + ' ' + (ev.creator||'') + ' ' + (ev.notes||'')).toLowerCase(); if(!hay.includes(q)) return false }
+        if(from){ const d = new Date(ev.date); if(d < startOfDay(from)) return false }
+        if(to){ const d = new Date(ev.date); if(d > endOfDay(to)) return false }
+        return true
+      }).sort((a,b)=> new Date(a.date+'T'+(a.time||'00:00')) - new Date(b.date+'T'+(b.time||'00:00')))
+
+      eventsList.innerHTML = ''
+      if(filtered.length===0){ eventsList.innerHTML = '<div class="muted" style="padding:12px">Nenhum evento encontrado</div>'; return }
+
+      filtered.forEach(ev=>{
+        const el = document.createElement('div'); el.className='event'
+        el.innerHTML = `
+          <div class="meta">
+            <div class="date-chip">
+              <div style="font-weight:700">${formatDate(ev.date)}</div>
+              <div class="muted" style="font-size:12px">${ev.time || ''}</div>
+            </div>
+            <div>
+              <div class="title">${escapeHtml(ev.title)}</div>
+              <div class="muted">Criador: ${escapeHtml(ev.creator || ev.createdByName || '')}</div>
+              <div class="muted" style="margin-top:6px">${escapeHtml(truncate(ev.notes,80))}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost small" data-id="${ev.id}" data-action="edit">Editar</button>
+            <button class="btn btn-ghost small" data-id="${ev.id}" data-action="delete">Excluir</button>
+          </div>
+        `
+        eventsList.appendChild(el)
+      })
+    }
+
+    // save event -> firestore + log
+    form.addEventListener('submit', async e=>{
+      e.preventDefault()
+      const id = editingId.value
+      const data = {
+        title: titleI.value.trim(),
+        date: dateI.value,
+        time: timeI.value,
+        creator: creatorI.value.trim() || (currentUser && (currentUser.displayName || (currentUser.isAnonymous ? 'Usuário anônimo' : currentUser.email))) || '—',
+        notes: notesI.value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdByUid: currentUser ? currentUser.uid : null,
+        createdByName: creatorI.value.trim() || (currentUser && (currentUser.displayName || ''))
+      }
+      try{
+        if(id){
+          await col.doc(id).update(data)
+          await logCol.add({ action: 'Atualizado', title: data.title, user: data.createdByName || data.creator, createdAt: firebase.firestore.FieldValue.serverTimestamp(), refId: id })
+          showToast('Evento atualizado com sucesso', 'success')
+        } else {
+          data.createdAt = firebase.firestore.FieldValue.serverTimestamp()
+          const docRef = await col.add(data)
+          await logCol.add({ action: 'Criado', title: data.title, user: data.createdByName || data.creator, createdAt: firebase.firestore.FieldValue.serverTimestamp(), refId: docRef.id })
+          showToast('Evento criado com sucesso', 'success')
+        }
+        resetForm()
+      }catch(err){ console.error(err); showToast('Erro ao salvar: '+err.message,'error',7000) }
+    })
+
+    document.getElementById('resetBtn').addEventListener('click', ()=> resetForm())
+    function resetForm(){ form.reset(); editingId.value=''; if(currentUser && currentUser.displayName) creatorI.value = currentUser.displayName }
+
+    // edit/delete buttons
+    eventsList.addEventListener('click', async e=>{
+      const btn = e.target.closest('button')
+      if(!btn) return
+      const id = btn.dataset.id
+      const action = btn.dataset.action
+      if(action==='edit'){
+        const doc = await col.doc(id).get()
+        const ev = doc.data(); editingId.value = doc.id
+        titleI.value = ev.title; dateI.value = ev.date; timeI.value = ev.time || ''; creatorI.value = ev.creator || ev.createdByName || '' ; notesI.value = ev.notes || ''
+        window.scrollTo({top:0,behavior:'smooth'})
+      } else if(action==='delete'){
+        if(confirm('Excluir este evento?')){
+          try{
+            const doc = await col.doc(id).get(); const ev = doc.data();
+            await col.doc(id).delete()
+            await logCol.add({ action: 'Excluído', title: ev.title || '—', user: (currentUser && (currentUser.displayName || currentUser.uid)) || '—', createdAt: firebase.firestore.FieldValue.serverTimestamp(), refId: id })
+            showToast('Evento excluído', 'success')
+          }catch(err){ showToast('Erro ao excluir: '+err.message,'error') }
+        }
+      }
+    })
+
+    // search/filter
+    document.getElementById('filterBtn').addEventListener('click', ()=> render())
+    document.getElementById('clearFilter').addEventListener('click', ()=>{ fromDate.value=''; toDate.value=''; render() })
+    searchI.addEventListener('input', ()=> render())
+
+    // export/import JSON
+    document.getElementById('exportJSON').addEventListener('click', async ()=>{
+      try{
+        const snapshot = await col.get(); const arr = []
+        snapshot.forEach(doc=>{ const d = doc.data(); d.id = doc.id; arr.push(d) })
+        const blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'})
+        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'agenda-events.json'; a.click(); URL.revokeObjectURL(url)
+        showToast('Exportado JSON com '+arr.length+' eventos', 'info')
+      }catch(err){ showToast('Erro export JSON: '+err.message,'error') }
+    })
+
+    document.getElementById('importJSONBtn').addEventListener('click', ()=> document.getElementById('importFile').click())
+    document.getElementById('importFile').addEventListener('change', ev=>{
+      const f = ev.target.files[0]; if(!f) return
+      const reader = new FileReader(); reader.onload = async ()=>{
+        try{
+          const parsed = JSON.parse(reader.result);
+          if(!Array.isArray(parsed)) return showToast('Formato inválido: espere um array de eventos','error')
+          if(!confirm('Importar e salvar '+parsed.length+' eventos no Firestore?')) return
+          const batchSize = 500; let batch = db.batch(); let c = 0
+          for(const item of parsed){
+            const ref = item.id ? col.doc(item.id) : col.doc(); const copy = Object.assign({}, item); delete copy.id
+            batch.set(ref, copy); c++
+            if(c>=batchSize){ await batch.commit(); batch = db.batch(); c=0 }
+          }
+          if(c>0) await batch.commit()
+          showToast('Importação concluída', 'success')
+        }catch(e){ showToast('Erro importar: '+e.message,'error',7000) }
+      }; reader.readAsText(f); ev.target.value = ''
+    })
+
+    document.getElementById('clearAll').addEventListener('click', async ()=>{
+      if(!confirm('Apagar TODOS os eventos do Firestore? Esta ação é irreversível.')) return
+      try{
+        const snapshot = await col.get(); const batchSize=500; let batch = db.batch(); let i=0
+        snapshot.forEach(doc=>{ batch.delete(doc.ref); i++; if(i>=batchSize){ batch.commit(); batch=db.batch(); i=0 } })
+        await batch.commit(); showToast('Todos os eventos removidos','success')
+      }catch(err){ showToast('Erro ao limpar: '+err.message,'error') }
+    })
+
+    // PDF generation
+    document.getElementById('pdfBtn').addEventListener('click', async ()=>{
+      if(typeof html2pdf === 'undefined'){ showToast('Biblioteca html2pdf não encontrada. Verifique a conexão ou abra via servidor (localhost).','error'); return }
+      const from = fromDate.value ? new Date(fromDate.value) : null
+      const to = toDate.value ? new Date(toDate.value) : null
+      // fetch events within range
+      try{
+        let q = col.orderBy('date')
+        if(from) q = q.where('date', '>=', fromDate.value)
+        if(to) q = q.where('date', '<=', toDate.value)
+        const snapshot = await q.get(); const arr = []
+        snapshot.forEach(doc=>{ const d = doc.data(); d.id = doc.id; arr.push(d) })
+        if(arr.length===0){ showToast('Nenhum evento no intervalo selecionado','info'); return }
+        // build HTML
+        const container = document.createElement('div'); container.style.padding='18px'; container.style.fontFamily='Inter, Arial'; container.style.color='#111';
+        container.innerHTML = `<h2 style="margin-bottom:6px">Agenda — Exportação</h2><div style="margin-bottom:8px;color:#444">Período: ${fromDate.value || '—'} até ${toDate.value || '—'}</div>`
+        arr.forEach(ev=>{
+          const card = document.createElement('div'); card.style.borderBottom='1px solid #eee'; card.style.padding='8px 0'
+          card.innerHTML = `<div style="font-weight:700">${escapeHtml(ev.title)} — ${ev.time || ''} ${formatDate(ev.date)}</div>
+            <div style="color:#555">Criador: ${escapeHtml(ev.creator || ev.createdByName || '')}</div>
+            <div style="margin-top:6px;color:#333">${escapeHtml(ev.notes || '').replaceAll('\n','<br/>')}</div>`
+          container.appendChild(card)
+        })
+        const opt = { margin:12, filename:`agenda_${fromDate.value||'start'}_${toDate.value||'end'}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }
+        html2pdf().set(opt).from(container).save().then(()=> showToast('PDF gerado com sucesso','success')).catch(err=> showToast('Erro gerar PDF: '+err.message,'error'))
+      }catch(err){ showToast('Erro ao buscar eventos para PDF: '+err.message,'error') }
+    })
+
+    document.getElementById('testPdfBtn').addEventListener('click', ()=>{
+      if(typeof html2pdf === 'undefined') showToast('html2pdf NÃO encontrado', 'error')
+      else showToast('html2pdf carregado ✔', 'success')
+    })
+
+    // initial helper
+    (function init(){
+      if(firebaseConfig.apiKey === 'REPLACE_ME'){
+        showToast('⚠️ Coloque firebaseConfig no código (veja instruções).','error',8000)
+        userInfo.textContent = 'Configurar firebaseConfig'
+      }
+    })()
+
+  </script>
+</body>
+</html>
