@@ -1,292 +1,182 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Agenda Digital — Firebase (Compartilhada)</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda de Eventos</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root {
-  --bg:#071022; --card:#0b1220; --accent1:#7c3aed; --accent2:#06b6d4;
-  --muted:#94a3b8; --success:#16a34a; --danger:#ef4444;
-}
-*{box-sizing:border-box}
-body {
-  font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
-  background:linear-gradient(180deg,#071022 0%, #071730 60%);
-  color:#e6eef8;margin:0;min-height:100vh;
-}
-.app{max-width:1200px;margin:20px auto;padding:18px}
-header{display:flex;align-items:center;gap:12px}
-.brand{font-weight:800;font-size:20px}
-.tag{font-size:13px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:380px 1fr 320px;gap:18px;margin-top:16px}
-.card{
-  background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-  padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)
-}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-input,textarea,select{
-  width:100%;padding:10px;border-radius:10px;
-  border:1px solid rgba(255,255,255,0.04);
-  background:transparent;color:inherit;font-size:14px
-}
-textarea{min-height:90px}
-.row{display:flex;gap:10px}
-.btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 12px;border-radius:10px;border:0;cursor:pointer
-}
-.btn-primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:700}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-.small{padding:8px 10px;font-size:13px}
-.events-list{display:grid;gap:10px;margin-top:10px}
-.event{
-  display:flex;justify-content:space-between;gap:12px;
-  padding:12px;border-radius:10px;
-  background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-  align-items:center
-}
-.meta{display:flex;gap:12px;align-items:center}
-.date-chip{
-  background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
-  padding:8px 10px;border-radius:8px;text-align:center;min-width:84px
-}
-.title{font-weight:700}
-.muted{color:var(--muted);font-size:13px}
-footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-.toast-wrap{
-  position:fixed;right:18px;bottom:18px;
-  display:flex;flex-direction:column;gap:8px;z-index:9999
-}
-.toast{
-  min-width:240px;padding:12px 14px;border-radius:10px;color:white;
-  box-shadow:0 6px 20px rgba(2,6,23,0.6);font-weight:600;transition:opacity .4s
-}
-.toast.success{background:var(--success)}
-.toast.error{background:var(--danger)}
-.toast.info{background:#0f1724;border:1px solid rgba(255,255,255,0.06)}
-.activity-list{max-height:360px;overflow:auto;padding-top:8px}
-.activity{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02);font-size:13px}
-.empty{color:var(--muted);padding:12px}
-@media(max-width:1100px){.grid{grid-template-columns:1fr}.brand{font-size:18px}}
+  body { font-family: sans-serif; margin: 20px; }
+  input, button { margin: 5px 0; }
+  table { border-collapse: collapse; margin-top: 10px; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  #toast { position: fixed; bottom: 10px; right: 10px; padding: 10px; background: #333; color: #fff; display: none; border-radius: 5px; }
 </style>
 </head>
-
 <body>
-<div class="app">
-  <header>
-    <div>
-      <div class="brand">Agenda Digital — Compartilhada</div>
-      <div class="tag">Firestore • notificações • histórico</div>
-    </div>
-    <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
-      <div id="userInfo" class="muted" style="font-size:13px">Conectando…</div>
-      <button id="signBtn" class="btn btn-ghost small">Entrar</button>
-    </div>
-  </header>
 
-  <div class="grid">
-    <!-- Form -->
-    <div>
-      <div class="card">
-        <h3>Criar / Editar evento</h3>
-        <form id="eventForm">
-          <label for="title">Nome do evento</label>
-          <input id="title" required placeholder="Ex: Reunião com equipe" />
+<h1>Agenda de Eventos</h1>
 
-          <div class="row">
-            <div style="flex:1">
-              <label for="date">Data</label>
-              <input id="date" type="date" required />
-            </div>
-            <div style="flex:1">
-              <label for="time">Horário</label>
-              <input id="time" type="time" required />
-            </div>
-          </div>
-
-          <label for="creator">Nome do criador</label>
-          <input id="creator" placeholder="Seu nome (auto)" />
-
-          <label for="notes">Observações</label>
-          <textarea id="notes" placeholder="Detalhes do evento"></textarea>
-
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn btn-primary" type="submit">Salvar evento</button>
-            <button type="button" id="resetBtn" class="btn btn-ghost small">Limpar</button>
-          </div>
-          <input type="hidden" id="editingId" />
-        </form>
-      </div>
-    </div>
-
-    <!-- Lista central -->
-    <div>
-      <div class="card">
-        <h3>Eventos</h3>
-        <div id="eventsList" class="events-list"></div>
-      </div>
-    </div>
-
-    <!-- Painel direito -->
-    <div>
-      <div class="card">
-        <h4>Atividades recentes</h4>
-        <div class="activity-list" id="activityList"><div class="empty">Nenhuma atividade</div></div>
-      </div>
-    </div>
-  </div>
-
-  <footer>Feito com ♥ — substitua o <code>firebaseConfig</code> pelo seu.</footer>
+<div>
+  <button id="signBtn">Login Google</button>
+  <span id="userInfo">Usuário Anônimo</span>
 </div>
-<div id="toastWrap" class="toast-wrap"></div>
 
-<!-- libs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<h2>Criar Evento</h2>
+<input type="text" id="titleI" placeholder="Título"><br>
+<input type="date" id="dateI"><br>
+<input type="time" id="timeI"><br>
+<input type="text" id="creatorI" placeholder="Criador"><br>
+<textarea id="descI" placeholder="Descrição"></textarea><br>
+<button id="saveBtn">Salvar Evento</button>
+
+<h2>Eventos</h2>
+<table id="eventsTable">
+  <thead>
+    <tr>
+      <th>Título</th>
+      <th>Data</th>
+      <th>Hora</th>
+      <th>Criador</th>
+      <th>Descrição</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<button id="pdfBtn">Gerar PDF</button>
+
+<div id="toast"></div>
 
 <script>
-const firebaseConfig = {
+  // -------------------- FIREBASE CONFIG --------------------
+  const firebaseConfig = {
   apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
   authDomain: "agendadigital-44dc9.firebaseapp.com",
   projectId: "agendadigital-44dc9",
   storageBucket: "agendadigital-44dc9.appspot.com",
   messagingSenderId: "569121363405",
   appId: "1:569121363405:web:1c7ab280393c090c40a084"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const col = db.collection('events');
-const logCol = db.collection('events_log');
-
-const titleI=document.getElementById('title'),
-dateI=document.getElementById('date'),
-timeI=document.getElementById('time'),
-creatorI=document.getElementById('creator'),
-notesI=document.getElementById('notes'),
-editingId=document.getElementById('editingId'),
-eventsList=document.getElementById('eventsList'),
-toastWrap=document.getElementById('toastWrap'),
-activityList=document.getElementById('activityList'),
-userInfo=document.getElementById('userInfo'),
-signBtn=document.getElementById('signBtn');
-
-function showToast(txt,type='info',ms=3000){
-  const t=document.createElement('div');
-  t.className=`toast ${type}`;t.textContent=txt;
-  toastWrap.appendChild(t);
-  setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.remove(),400)},ms);
-}
-function escapeHtml(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-function formatDate(d){return new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});}
-
-// AUTH
-let currentUser=null;
-auth.onAuthStateChanged(u=>{
-  currentUser=u;
-  if(u){
-    const display=u.isAnonymous?'Usuário anônimo':(u.displayName||u.email);
-    userInfo.textContent=display;
-    signBtn.textContent=u.isAnonymous?'Login Google':'Sair';
-    if(!creatorI.value) creatorI.value=display;
-  } else {
-    userInfo.textContent='Desconectado';
-    signBtn.textContent='Entrar';
-  }
-});
-(async()=>{
-  try{ if(!auth.currentUser) await auth.signInAnonymously(); }
-  catch(e){ console.error(e); showToast('Erro auth anônima','error'); }
-})();
-signBtn.addEventListener('click',async()=>{
-  if(currentUser && !currentUser.isAnonymous){
-    await auth.signOut(); await auth.signInAnonymously();
-    showToast('Desconectado','info'); return;
-  }
-  const prov=new firebase.auth.GoogleAuthProvider();
-  try{ await auth.signInWithPopup(prov); }
-  catch(e){ showToast('Erro login Google: '+e.message,'error'); }
-});
-
-// LISTENER
-col.orderBy('date').orderBy('time').onSnapshot(snap=>{
-  const docs=[]; snap.forEach(d=>{const x=d.data();x.id=d.id;docs.push(x)});
-  render(docs);
-});
-function render(arr){
-  eventsList.innerHTML='';
-  if(!arr.length){eventsList.innerHTML='<div class="muted">Nenhum evento</div>';return;}
-  arr.forEach(ev=>{
-    const el=document.createElement('div');
-    el.className='event';
-    el.innerHTML=`
-      <div class="meta">
-        <div class="date-chip">
-          <div style="font-weight:700">${formatDate(ev.date)}</div>
-          <div class="muted" style="font-size:12px">${ev.time||''}</div>
-        </div>
-        <div>
-          <div class="title">${escapeHtml(ev.title)}</div>
-          <div class="muted">Criador: ${escapeHtml(ev.creator||'')}</div>
-          <div class="muted" style="margin-top:6px">${escapeHtml(ev.notes||'')}</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost small" data-id="${ev.id}" data-action="edit">Editar</button>
-        <button class="btn btn-ghost small" data-id="${ev.id}" data-action="delete">Excluir</button>
-      </div>`;
-    eventsList.appendChild(el);
-  });
-}
-
-// SALVAR / EDITAR
-document.getElementById('eventForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const id=editingId.value;
-  const data={
-    title:titleI.value.trim(),
-    date:dateI.value,time:timeI.value,
-    creator:creatorI.value.trim()||'—',
-    notes:notesI.value.trim(),
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-    createdBy:currentUser?currentUser.uid:null
   };
-  try{
-    if(id){
-      await col.doc(id).update(data);
-      await logCol.add({action:'Atualizado',title:data.title,createdAt:new Date()});
-      showToast('Evento atualizado','success');
-    } else {
-      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
-      const docRef=await col.add(data);
-      await logCol.add({action:'Criado',title:data.title,refId:docRef.id,createdAt:new Date()});
-      showToast('Evento criado','success');
-    }
-    e.target.reset(); editingId.value='';
-  }catch(err){ showToast('Erro: '+err.message,'error'); }
-});
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  let currentUser = null;
 
-// EDIT / DELETE
-eventsList.addEventListener('click',async e=>{
-  const b=e.target.closest('button'); if(!b) return;
-  const id=b.dataset.id;
-  if(b.dataset.action==='edit'){
-    const d=await col.doc(id).get();const ev=d.data();
-    editingId.value=id; titleI.value=ev.title; dateI.value=ev.date; timeI.value=ev.time;
-    creatorI.value=ev.creator; notesI.value=ev.notes;
-    window.scrollTo({top:0,behavior:'smooth'});
-  } else if(b.dataset.action==='delete'){
-    if(confirm('Excluir este evento?')){
-      await col.doc(id).delete();
-      await logCol.add({action:'Excluído',refId:id,createdAt:new Date()});
-      showToast('Evento excluído','success');
-    }
+  const showToast = (msg, type='info') => {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.background = type==='error'?'#c00':'#333';
+    toast.style.display = 'block';
+    setTimeout(()=>toast.style.display='none', 3000);
   }
-});
+
+  // -------------------- AUTENTICAÇÃO --------------------
+  const signBtn = document.getElementById('signBtn');
+  const userInfo = document.getElementById('userInfo');
+
+  signBtn.addEventListener('click', async ()=>{
+    if(auth.currentUser && !auth.currentUser.isAnonymous){
+      await auth.signOut();
+      showToast('Deslogado');
+    } else {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+      } catch(e){
+        console.error(e);
+        showToast('Erro login Google','error');
+      }
+    }
+  });
+
+  auth.onAuthStateChanged(async (user)=>{
+    if(!user){
+      try { await auth.signInAnonymously(); }
+      catch(e){ console.error(e); showToast('Erro auth anônima','error'); }
+    } else {
+      currentUser = user;
+      const display = user.isAnonymous ? 'Usuário Anônimo' : (user.displayName || user.email);
+      userInfo.textContent = display;
+      signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
+      if(!document.getElementById('creatorI').value) document.getElementById('creatorI').value = display;
+    }
+  });
+
+  // -------------------- SALVAR EVENTO --------------------
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.addEventListener('click', async ()=>{
+    const title = document.getElementById('titleI').value;
+    const date = document.getElementById('dateI').value;
+    const time = document.getElementById('timeI').value;
+    const creator = document.getElementById('creatorI').value;
+    const desc = document.getElementById('descI').value;
+
+    if(!title || !date) { showToast('Título e data obrigatórios','error'); return; }
+
+    try {
+      await db.collection('events').add({
+        title, date, time, creator, desc, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast('Evento salvo com sucesso');
+      document.getElementById('titleI').value='';
+      document.getElementById('dateI').value='';
+      document.getElementById('timeI').value='';
+      document.getElementById('descI').value='';
+    } catch(e){
+      console.error(e);
+      showToast('Erro ao salvar evento','error');
+    }
+  });
+
+  // -------------------- LISTAR EVENTOS --------------------
+  const tbody = document.querySelector('#eventsTable tbody');
+  db.collection('events').orderBy('date','desc').orderBy('time','desc')
+    .onSnapshot(snapshot=>{
+      tbody.innerHTML='';
+      snapshot.forEach(doc=>{
+        const ev = doc.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${ev.title||''}</td>
+          <td>${ev.date||''}</td>
+          <td>${ev.time||''}</td>
+          <td>${ev.creator||''}</td>
+          <td>${ev.desc||''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+
+  // -------------------- GERAR PDF --------------------
+  const pdfBtn = document.getElementById('pdfBtn');
+  pdfBtn.addEventListener('click', ()=>{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y=10;
+    doc.setFontSize(14);
+    doc.text('Agenda de Eventos', 10, y); y+=10;
+    db.collection('events').orderBy('date','asc').orderBy('time','asc').get()
+      .then(snapshot=>{
+        snapshot.forEach(ev=>{
+          const e = ev.data();
+          doc.setFontSize(12);
+          doc.text(`Título: ${e.title}`, 10, y); y+=6;
+          doc.text(`Data: ${e.date} Hora: ${e.time}`, 10, y); y+=6;
+          doc.text(`Criador: ${e.creator}`, 10, y); y+=6;
+          doc.text(`Descrição: ${e.desc}`, 10, y); y+=10;
+          if(y>270){ doc.addPage(); y=10; }
+        });
+        doc.save('eventos.pdf');
+      }).catch(e=>{
+        console.error(e); showToast('Erro gerar PDF','error');
+      });
+  });
+
 </script>
 </body>
 </html>
+
