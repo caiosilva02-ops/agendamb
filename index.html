@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda Virtual Milton Borges Ypiranga</title>
+<title>Agenda Firebase Elegante</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -19,6 +19,7 @@
 :root {
     --primary-color: #007bff; /* Azul */
     --secondary-color: #6c757d; /* Cinza */
+    --success-color: #28a745; /* Verde para Edição */
     --background-light: #f5f6fb; /* Fundo principal */
     --surface-light: #ffffff; /* Fundo dos cards e painéis */
     --border-light: #e9ecef;
@@ -72,14 +73,41 @@ textarea {
     resize: vertical;
     min-height: 80px;
 }
+/* Estilo: Grupo de Seletor de Hora com Ícone */
+.time-selector-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--surface-light);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0 10px;
+    margin: 4px 0;
+    flex-grow: 1; /* Permite que o wrapper ocupe o espaço */
+}
+.time-selector-icon {
+    font-size: 18px;
+    color: var(--secondary-color);
+    margin-right: 10px;
+    padding-top: 2px;
+}
 .time-selector-group {
-    display: inline-flex;
+    display: flex;
     gap: 5px;
+    flex-grow: 1;
+    padding: 8px 0;
 }
 .time-selector-group select {
-    width: 80px;
+    flex-grow: 0;
+    width: 70px; 
+    padding: 8px 5px; 
+    margin: 0;
+    border: none; 
+    box-shadow: none; 
+    background: transparent;
 }
-
+.time-selector-group select:focus {
+    box-shadow: none;
+}
 
 /* Botões */
 button { 
@@ -112,6 +140,30 @@ button:disabled {
     background: #5a6268;
     box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
+
+/* Botões de Ação na Tabela */
+.action-btn {
+    padding: 6px 10px; 
+    font-size: 13px;
+    border-radius: 4px;
+    margin-right: 5px;
+    margin-top: 0;
+}
+.edit-btn {
+    background: var(--success-color); /* Verde */
+}
+.edit-btn:hover {
+    background: #1e7e34;
+}
+.delete-btn { 
+    background: #dc3545; /* Vermelho */
+}
+.delete-btn:hover { 
+    background: #c82333; 
+}
+
+/* Restante do CSS permanece o mesmo para Dashboard e Toast */
+
 .header-info {
     display: flex;
     align-items: center;
@@ -122,8 +174,6 @@ button:disabled {
     font-weight: 500;
     color: #333;
 }
-
-/* Tabelas (Todos os Eventos) */
 table { 
     border-collapse: separate; 
     border-spacing: 0;
@@ -132,7 +182,7 @@ table {
     box-shadow: var(--shadow-light); 
     background: var(--surface-light); 
     border-radius: 8px;
-    overflow: hidden; /* Para manter o arredondamento */
+    overflow: hidden; 
 }
 th, td { 
     border-bottom: 1px solid var(--border-light); 
@@ -148,17 +198,6 @@ th {
 tr:last-child td {
     border-bottom: none;
 }
-.delete-btn { 
-    background: #dc3545; /* Vermelho para exclusão */
-    padding: 6px 10px; 
-    font-size: 13px;
-    border-radius: 4px;
-}
-.delete-btn:hover { 
-    background: #c82333; 
-}
-
-/* Layout dos painéis (Dashboard) */
 #dashboard {
     display: flex;
     gap: 20px;
@@ -194,8 +233,6 @@ tr:last-child td {
     color: var(--primary-color);
     font-weight: 500;
 }
-
-/* Estilos do Toast */
 .toast {
   position: fixed; right: 15px; bottom: 15px;
   background: var(--text-dark); 
@@ -214,7 +251,7 @@ tr:last-child td {
 
 <div class="container">
 
-    <h1>📅 Agenda Virtual de Eventos - Milton Borges Ypiranga</h1>
+    <h1>📅 Agenda de Eventos</h1>
 
     <div class="header-info">
       <button id="loginBtn">Login Google / Sair</button>
@@ -239,15 +276,21 @@ tr:last-child td {
     </div>
 
     <div class="input-group">
-        <div class="time-selector-group">
-            <select id="timeHour"></select>
-            <select id="timeMinute"></select>
+        <div class="time-selector-wrapper">
+            <span class="time-selector-icon">⌚</span>
+            <div class="time-selector-group">
+                <select id="timeHour"></select> : 
+                <select id="timeMinute"></select>
+            </div>
         </div>
+        
         <input id="creator" placeholder="Criador" />
     </div>
     
     <textarea id="desc" placeholder="Descrição"></textarea><br>
     <button id="save">Salvar evento</button>
+    <button id="cancelEdit" style="display:none; background: #dc3545;">Cancelar Edição</button>
+
 
     <h2>Todos os Eventos</h2>
     <table>
@@ -272,7 +315,7 @@ const firebaseConfig = {
   projectId: "agendadigital-44dc9",
   storageBucket: "agendadigital-44dc9.firebasestorage.app",
   messagingSenderId: "569121363405",
-  appId: "1:569121363405:web:1c7ab280393c090c40a084"
+  appId: "1:569121363405:web:1c7ab280393c090c40aa72" // App ID atualizado
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -291,11 +334,13 @@ const timeMinuteI = document.getElementById('timeMinute');
 const creatorI = document.getElementById('creator');
 const descI = document.getElementById('desc');
 const saveBtn = document.getElementById('save');
+const cancelEditBtn = document.getElementById('cancelEdit'); // Novo botão
 const latestEventsDiv = document.getElementById('latestEvents');
 const upcomingEventsDiv = document.getElementById('upcomingEvents');
 
 
 let currentUser = null;
+let currentEditId = null; // Variável para rastrear o ID do evento em edição
 
 function showToast(msg) {
   toast.textContent = msg;
@@ -365,6 +410,60 @@ loginBtn.addEventListener('click', async () => {
 });
 
 /**
+ * 🔹 Limpa o formulário e retorna ao modo de criação
+ */
+function resetForm() {
+    titleI.value = '';
+    dateI.value = ''; 
+    descI.value = '';
+    // Reseta a hora
+    timeHourI.value = new Date().getHours().toString().padStart(2, '0');
+    timeMinuteI.value = '00';
+    
+    // Reseta o modo de edição
+    currentEditId = null;
+    saveBtn.textContent = 'Salvar evento';
+    saveBtn.style.backgroundColor = 'var(--primary-color)';
+    cancelEditBtn.style.display = 'none';
+    
+    if (currentUser && !currentUser.isAnonymous) {
+        creatorI.value = currentUser.displayName || currentUser.email || '';
+    }
+}
+cancelEditBtn.addEventListener('click', resetForm);
+
+
+/**
+ * 🔹 Pré-preenche o formulário para edição
+ * @param {string} id - O ID do documento no Firestore
+ * @param {object} eventData - Os dados do evento
+ */
+function editEvent(id, eventData) {
+    currentEditId = id;
+    
+    // Preenche os campos
+    titleI.value = eventData.title || '';
+    dateI.value = eventData.date || '';
+    creatorI.value = eventData.creator || '';
+    descI.value = eventData.desc || '';
+    
+    // Preenche a hora
+    const [hour, minute] = (eventData.time || '00:00').split(':');
+    timeHourI.value = hour.padStart(2, '0');
+    timeMinuteI.value = minute.padStart(2, '0');
+    
+    // Muda o botão de Salvar para Atualizar
+    saveBtn.textContent = 'Atualizar evento';
+    saveBtn.style.backgroundColor = 'var(--success-color)';
+    cancelEditBtn.style.display = 'inline-block';
+    
+    // Rola para o topo do formulário
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.editEvent = editEvent;
+
+
+/**
  * 🔹 Função para deletar um evento
  * @param {string} id - O ID do documento no Firestore
  */
@@ -375,6 +474,9 @@ async function deleteEvent(id) {
     try {
         await db.collection('events').doc(id).delete();
         showToast("Evento excluído!");
+        if (currentEditId === id) {
+            resetForm(); // Limpa o formulário se o evento deletado era o que estava sendo editado
+        }
     } catch (err) {
         console.error("Erro ao excluir evento:", err);
         showToast("Erro ao excluir evento");
@@ -383,11 +485,11 @@ async function deleteEvent(id) {
 window.deleteEvent = deleteEvent; 
 
 
-// 🔹 Salvar evento
+// 🔹 Salvar/Atualizar evento
 saveBtn.addEventListener('click', async () => {
   const title = titleI.value.trim();
   const date = dateI.value;
-  const time = `${timeHourI.value}:${timeMinuteI.value}`; // Combinando hora e minuto
+  const time = `${timeHourI.value}:${timeMinuteI.value}`;
   const creator = creatorI.value.trim();
   const desc = descI.value.trim();
 
@@ -399,25 +501,27 @@ saveBtn.addEventListener('click', async () => {
   saveBtn.disabled = true;
 
   try {
-    await db.collection('events').add({
-      title, date, time, creator, desc,
-      createdBy: currentUser ? currentUser.uid : null,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const eventData = {
+        title, date, time, creator, desc,
+    };
     
-    showToast("Evento salvo!");
+    if (currentEditId) {
+        // MODO DE EDIÇÃO
+        await db.collection('events').doc(currentEditId).update(eventData);
+        showToast("Evento atualizado!");
+    } else {
+        // MODO DE CRIAÇÃO
+        eventData.createdBy = currentUser ? currentUser.uid : null;
+        eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection('events').add(eventData);
+        showToast("Evento salvo!");
+    }
     
-    // Limpeza completa do formulário
-    titleI.value = '';
-    dateI.value = ''; 
-    descI.value = '';
-    // Manter a hora/minuto no valor padrão
-    timeHourI.value = new Date().getHours().toString().padStart(2, '0');
-    timeMinuteI.value = '00';
+    resetForm();
 
   } catch (err) {
     console.error(err);
-    showToast("Erro ao salvar evento");
+    showToast(`Erro ao ${currentEditId ? 'atualizar' : 'salvar'} evento`);
   } finally {
     saveBtn.disabled = false;
   }
@@ -425,9 +529,7 @@ saveBtn.addEventListener('click', async () => {
 
 /**
  * 🔹 Renderiza a lista de eventos no painel (todos, próximos, ou recentes)
- * @param {HTMLElement} targetDiv - O elemento DOM onde renderizar.
- * @param {Array} events - A lista de objetos de evento.
- * @param {string} type - Tipo de renderização ('table', 'list').
+ * (Função adaptada para incluir o botão de edição)
  */
 function renderEvents(targetDiv, events, type = 'table') {
     if (type === 'table') {
@@ -438,6 +540,15 @@ function renderEvents(targetDiv, events, type = 'table') {
         }
         events.forEach(e => {
             const tr = document.createElement('tr');
+            // Stringify o objeto de dados para passar para a função editEvent
+            const eventDataString = JSON.stringify({
+                title: e.title,
+                date: e.date,
+                time: e.time,
+                creator: e.creator,
+                desc: e.desc
+            }).replace(/"/g, "'"); // Substitui aspas duplas por simples para evitar quebra no HTML
+            
             tr.innerHTML = `
                 <td>${e.title || ''}</td>
                 <td>${e.date || ''}</td>
@@ -445,7 +556,13 @@ function renderEvents(targetDiv, events, type = 'table') {
                 <td>${e.creator || ''}</td>
                 <td>${e.desc || ''}</td>
                 <td>
-                    <button class="delete-btn" onclick="deleteEvent('${e.id}')">Excluir</button>
+                    <button class="action-btn edit-btn" 
+                            onclick="editEvent('${e.id}', ${eventDataString})">
+                        Editar
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteEvent('${e.id}')">
+                        Excluir
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -467,6 +584,7 @@ function renderEvents(targetDiv, events, type = 'table') {
     }
 }
 
+
 // 🔹 Listener em tempo real para todos os eventos
 db.collection('events')
   .orderBy('date','asc') 
@@ -479,10 +597,7 @@ db.collection('events')
         });
     }
 
-    // 1. Renderiza a tabela principal (ordenada por proximidade)
     renderEvents(tbody, allEvents, 'table');
-
-    // 2. Renderiza os Painéis
     updateDashboards(allEvents);
 
   }, error => {
@@ -490,6 +605,7 @@ db.collection('events')
     showToast("Erro ao carregar a lista de eventos.");
   });
 
+// ... (Restante das funções updateDashboards e Gerar PDF permanecem iguais)
 /**
  * 🔹 Atualiza os painéis "Próximos Eventos" e "Últimos Criados"
  * @param {Array} allEvents - Lista completa de eventos.
@@ -586,4 +702,3 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
-
