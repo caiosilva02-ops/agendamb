@@ -242,7 +242,7 @@
 
 
     // try to ensure anonymous sign-in for public write
-    (async function ensureAnon(){ try{ if(!auth.currentUser) await auth.signInAnonymously() }catch(e){ console.error(e); showToast('Erro autenticação anônima: '+e.message,'error') } })()
+    (async function ensureAnon(){ try{ if(!auth.currentUser) await auth.signInAnonymously() }catch(e){ console.error(e); showToast('Erro autenticação anônima: '+e.message,'error') } })
 
     signBtn.addEventListener('click', async ()=>{
       if(currentUser && !currentUser.isAnonymous){ // sign out
@@ -494,6 +494,7 @@
   </script>
 </body>
 </html>
+
 
 
 
