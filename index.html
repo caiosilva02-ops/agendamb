@@ -61,13 +61,13 @@ th { background: #f0f0f0; }
 
 <script>
 const firebaseConfig = {
-  // ⚠️ Substitua por suas credenciais do Firebase
-  apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
-  authDomain: "agendadigital-44dc9.firebaseapp.com",
-  projectId: "agendadigital-44dc9",
-  storageBucket: "agendadigital-44dc9.firebasestorage.app",
-  messagingSenderId: "569121363405",
-  appId: "1:569121363405:web:1c7ab280393c090c40a084"
+  // ⚠️ Substitua pelos dados do seu projeto Firebase
+  apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  authDomain: "xxxxxxxx.firebaseapp.com",
+  projectId: "xxxxxxxx",
+  storageBucket: "xxxxxxxx.appspot.com",
+  messagingSenderId: "xxxxxxxx",
+  appId: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -78,6 +78,11 @@ const loginBtn = document.getElementById('loginBtn');
 const userInfo = document.getElementById('userInfo');
 const toast = document.getElementById('toast');
 const tbody = document.getElementById('eventsBody');
+const titleI = document.getElementById('title');
+const dateI = document.getElementById('date');
+const timeI = document.getElementById('time');
+const creatorI = document.getElementById('creator');
+const descI = document.getElementById('desc');
 
 let currentUser = null;
 
@@ -87,16 +92,27 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// 🔹 Login persistente
+// 🔹 Trata o retorno do login via redirect (Google)
+auth.getRedirectResult().then(result => {
+  if (result.user) {
+    showToast("Login Google bem-sucedido!");
+  }
+}).catch(err => {
+  console.error(err);
+  showToast("Erro ao concluir login Google");
+});
+
+// 🔹 Mantém login persistente
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
+// 🔹 Detecta mudanças de autenticação
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     const name = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email);
     userInfo.textContent = `Logado como: ${name}`;
     loginBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
-    if (!document.getElementById('creator').value) document.getElementById('creator').value = name;
+    if (!creatorI.value) creatorI.value = name;
   } else {
     try {
       await auth.signInAnonymously();
@@ -107,12 +123,15 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
+// 🔹 Botão de login / logout
 loginBtn.addEventListener('click', async () => {
   if (currentUser && !currentUser.isAnonymous) {
     await auth.signOut();
-    showToast("Deslogado");
+    showToast("Deslogado com sucesso");
   } else {
     const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
     try {
       await auth.signInWithRedirect(provider);
     } catch (e) {
@@ -124,11 +143,11 @@ loginBtn.addEventListener('click', async () => {
 
 // 🔹 Salvar evento
 document.getElementById('save').addEventListener('click', async () => {
-  const title = document.getElementById('title').value.trim();
-  const date = document.getElementById('date').value;
-  const time = document.getElementById('time').value;
-  const creator = document.getElementById('creator').value.trim();
-  const desc = document.getElementById('desc').value.trim();
+  const title = titleI.value.trim();
+  const date = dateI.value;
+  const time = timeI.value;
+  const creator = creatorI.value.trim();
+  const desc = descI.value.trim();
 
   if (!title || !date) {
     showToast("Título e data são obrigatórios");
@@ -142,15 +161,15 @@ document.getElementById('save').addEventListener('click', async () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast("Evento salvo!");
-    document.getElementById('title').value = '';
-    document.getElementById('desc').value = '';
+    titleI.value = '';
+    descI.value = '';
   } catch (err) {
     console.error(err);
     showToast("Erro ao salvar evento");
   }
 });
 
-// 🔹 Carregar eventos em tempo real
+// 🔹 Listener em tempo real para eventos
 db.collection('events')
   .orderBy('date', 'desc')
   .orderBy('time', 'desc')
@@ -174,14 +193,15 @@ db.collection('events')
     });
   });
 
-// 🔹 Gerar PDF
+// 🔹 Gerar PDF com todos os eventos
 document.getElementById('pdfBtn').addEventListener('click', async () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 10;
 
   doc.setFontSize(16);
-  doc.text('Agenda de Eventos', 10, y); y += 10;
+  doc.text('Agenda de Eventos', 10, y);
+  y += 10;
   doc.setFontSize(12);
 
   const snapshot = await db.collection('events').orderBy('date','asc').orderBy('time','asc').get();
@@ -200,4 +220,3 @@ document.getElementById('pdfBtn').addEventListener('click', async () => {
 </script>
 </body>
 </html>
-
