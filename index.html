@@ -227,18 +227,19 @@
     // AUTH
     let currentUser = null
     auth.onAuthStateChanged(user=>{
-      currentUser = user
-      if(user){
-        const display = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email || 'Usuário')
-        userInfo.textContent = display
-        signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair'
-        if(!creatorI.value) creatorI.value = display
-        showToast('Autenticado: '+display, 'success', 2000)
-      } else {
-        userInfo.textContent = 'Desconectado'
-        signBtn.textContent = 'Entrar'
-      }
-    })
+  currentUser = user
+  if(user){
+    const display = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email || 'Usuário')
+    userInfo.textContent = display
+    signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair'
+    if(!creatorI.value) creatorI.value = display
+    showToast('Autenticado: '+display, 'success', 2000)
+  } else {
+    userInfo.textContent = 'Desconectado'
+    signBtn.textContent = 'Entrar'
+  }
+})
+
 
     // try to ensure anonymous sign-in for public write
     (async function ensureAnon(){ try{ if(!auth.currentUser) await auth.signInAnonymously() }catch(e){ console.error(e); showToast('Erro autenticação anônima: '+e.message,'error') } })()
@@ -493,6 +494,7 @@
   </script>
 </body>
 </html>
+
 
 
 
