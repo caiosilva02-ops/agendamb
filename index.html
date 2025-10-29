@@ -3,180 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda de Eventos</title>
+<title>Agenda Firebase</title>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-  body { font-family: sans-serif; margin: 20px; }
-  input, button { margin: 5px 0; }
-  table { border-collapse: collapse; margin-top: 10px; width: 100%; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  #toast { position: fixed; bottom: 10px; right: 10px; padding: 10px; background: #333; color: #fff; display: none; border-radius: 5px; }
+body { font-family: 'Inter', sans-serif; margin: 20px; background:#f5f6fb; color:#222; }
+h1 { color:#333; }
+input, textarea, button { margin: 4px 0; padding: 6px; font-size:14px; }
+button { cursor:pointer; }
+table { border-collapse: collapse; width: 100%; margin-top:10px; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { background: #f0f0f0; }
+.toast {
+  position: fixed; right: 15px; bottom: 15px;
+  background: #333; color: #fff; padding: 10px 14px;
+  border-radius: 8px; opacity: 0; transition: opacity 0.3s ease;
+}
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<h1>Agenda de Eventos</h1>
+<h1>📅 Agenda de Eventos</h1>
 
 <div>
-  <button id="signBtn">Login Google</button>
-  <span id="userInfo">Usuário Anônimo</span>
+  <button id="loginBtn">Login Google / Sair</button>
+  <span id="userInfo">Carregando...</span>
 </div>
 
-<h2>Criar Evento</h2>
-<input type="text" id="titleI" placeholder="Título"><br>
-<input type="date" id="dateI"><br>
-<input type="time" id="timeI"><br>
-<input type="text" id="creatorI" placeholder="Criador"><br>
-<textarea id="descI" placeholder="Descrição"></textarea><br>
-<button id="saveBtn">Salvar Evento</button>
+<h2>Novo Evento</h2>
+<input id="title" placeholder="Título" /><br>
+<input type="date" id="date" /><br>
+<input type="time" id="time" /><br>
+<input id="creator" placeholder="Criador" /><br>
+<textarea id="desc" placeholder="Descrição"></textarea><br>
+<button id="save">Salvar evento</button>
 
 <h2>Eventos</h2>
-<table id="eventsTable">
+<table>
   <thead>
-    <tr>
-      <th>Título</th>
-      <th>Data</th>
-      <th>Hora</th>
-      <th>Criador</th>
-      <th>Descrição</th>
-    </tr>
+    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th></tr>
   </thead>
-  <tbody></tbody>
+  <tbody id="eventsBody"><tr><td colspan="5">Carregando eventos...</td></tr></tbody>
 </table>
 
-<button id="pdfBtn">Gerar PDF</button>
+<br>
+<button id="pdfBtn">📄 Gerar PDF</button>
 
-<div id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script>
-  // -------------------- FIREBASE CONFIG --------------------
-  const firebaseConfig = {
-  apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
-  authDomain: "agendadigital-44dc9.firebaseapp.com",
-  projectId: "agendadigital-44dc9",
-  storageBucket: "agendadigital-44dc9.appspot.com",
-  messagingSenderId: "569121363405",
-  appId: "1:569121363405:web:1c7ab280393c090c40a084"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  let currentUser = null;
+const firebaseConfig = {
+  // ⚠️ Substitua por suas credenciais do Firebase
+  apiKey: "xxxx",
+  authDomain: "xxxx.firebaseapp.com",
+  projectId: "xxxx",
+  storageBucket: "xxxx.appspot.com",
+  messagingSenderId: "xxxx",
+  appId: "xxxx"
+};
 
-  const showToast = (msg, type='info') => {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.style.background = type==='error'?'#c00':'#333';
-    toast.style.display = 'block';
-    setTimeout(()=>toast.style.display='none', 3000);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const loginBtn = document.getElementById('loginBtn');
+const userInfo = document.getElementById('userInfo');
+const toast = document.getElementById('toast');
+const tbody = document.getElementById('eventsBody');
+
+let currentUser = null;
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// 🔹 Login persistente
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    currentUser = user;
+    const name = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email);
+    userInfo.textContent = `Logado como: ${name}`;
+    loginBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
+    if (!document.getElementById('creator').value) document.getElementById('creator').value = name;
+  } else {
+    try {
+      await auth.signInAnonymously();
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao autenticar anonimamente");
+    }
+  }
+});
+
+loginBtn.addEventListener('click', async () => {
+  if (currentUser && !currentUser.isAnonymous) {
+    await auth.signOut();
+    showToast("Deslogado");
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+      await auth.signInWithRedirect(provider);
+    } catch (e) {
+      console.error(e);
+      showToast("Erro no login Google");
+    }
+  }
+});
+
+// 🔹 Salvar evento
+document.getElementById('save').addEventListener('click', async () => {
+  const title = document.getElementById('title').value.trim();
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+  const creator = document.getElementById('creator').value.trim();
+  const desc = document.getElementById('desc').value.trim();
+
+  if (!title || !date) {
+    showToast("Título e data são obrigatórios");
+    return;
   }
 
-  // -------------------- AUTENTICAÇÃO --------------------
-  const signBtn = document.getElementById('signBtn');
-  const userInfo = document.getElementById('userInfo');
-
-  signBtn.addEventListener('click', async ()=>{
-    if(auth.currentUser && !auth.currentUser.isAnonymous){
-      await auth.signOut();
-      showToast('Deslogado');
-    } else {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        await auth.signInWithPopup(provider);
-      } catch(e){
-        console.error(e);
-        showToast('Erro login Google','error');
-      }
-    }
-  });
-
-  auth.onAuthStateChanged(async (user)=>{
-    if(!user){
-      try { await auth.signInAnonymously(); }
-      catch(e){ console.error(e); showToast('Erro auth anônima','error'); }
-    } else {
-      currentUser = user;
-      const display = user.isAnonymous ? 'Usuário Anônimo' : (user.displayName || user.email);
-      userInfo.textContent = display;
-      signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
-      if(!document.getElementById('creatorI').value) document.getElementById('creatorI').value = display;
-    }
-  });
-
-  // -------------------- SALVAR EVENTO --------------------
-  const saveBtn = document.getElementById('saveBtn');
-  saveBtn.addEventListener('click', async ()=>{
-    const title = document.getElementById('titleI').value;
-    const date = document.getElementById('dateI').value;
-    const time = document.getElementById('timeI').value;
-    const creator = document.getElementById('creatorI').value;
-    const desc = document.getElementById('descI').value;
-
-    if(!title || !date) { showToast('Título e data obrigatórios','error'); return; }
-
-    try {
-      await db.collection('events').add({
-        title, date, time, creator, desc, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showToast('Evento salvo com sucesso');
-      document.getElementById('titleI').value='';
-      document.getElementById('dateI').value='';
-      document.getElementById('timeI').value='';
-      document.getElementById('descI').value='';
-    } catch(e){
-      console.error(e);
-      showToast('Erro ao salvar evento','error');
-    }
-  });
-
-  // -------------------- LISTAR EVENTOS --------------------
-  const tbody = document.querySelector('#eventsTable tbody');
-  db.collection('events').orderBy('date','desc').orderBy('time','desc')
-    .onSnapshot(snapshot=>{
-      tbody.innerHTML='';
-      snapshot.forEach(doc=>{
-        const ev = doc.data();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${ev.title||''}</td>
-          <td>${ev.date||''}</td>
-          <td>${ev.time||''}</td>
-          <td>${ev.creator||''}</td>
-          <td>${ev.desc||''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+  try {
+    await db.collection('events').add({
+      title, date, time, creator, desc,
+      createdBy: currentUser ? currentUser.uid : null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    showToast("Evento salvo!");
+    document.getElementById('title').value = '';
+    document.getElementById('desc').value = '';
+  } catch (err) {
+    console.error(err);
+    showToast("Erro ao salvar evento");
+  }
+});
 
-  // -------------------- GERAR PDF --------------------
-  const pdfBtn = document.getElementById('pdfBtn');
-  pdfBtn.addEventListener('click', ()=>{
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y=10;
-    doc.setFontSize(14);
-    doc.text('Agenda de Eventos', 10, y); y+=10;
-    db.collection('events').orderBy('date','asc').orderBy('time','asc').get()
-      .then(snapshot=>{
-        snapshot.forEach(ev=>{
-          const e = ev.data();
-          doc.setFontSize(12);
-          doc.text(`Título: ${e.title}`, 10, y); y+=6;
-          doc.text(`Data: ${e.date} Hora: ${e.time}`, 10, y); y+=6;
-          doc.text(`Criador: ${e.creator}`, 10, y); y+=6;
-          doc.text(`Descrição: ${e.desc}`, 10, y); y+=10;
-          if(y>270){ doc.addPage(); y=10; }
-        });
-        doc.save('eventos.pdf');
-      }).catch(e=>{
-        console.error(e); showToast('Erro gerar PDF','error');
-      });
+// 🔹 Carregar eventos em tempo real
+db.collection('events')
+  .orderBy('date', 'desc')
+  .orderBy('time', 'desc')
+  .onSnapshot(snapshot => {
+    tbody.innerHTML = '';
+    if (snapshot.empty) {
+      tbody.innerHTML = '<tr><td colspan="5">Nenhum evento</td></tr>';
+      return;
+    }
+    snapshot.forEach(doc => {
+      const e = doc.data();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${e.title || ''}</td>
+        <td>${e.date || ''}</td>
+        <td>${e.time || ''}</td>
+        <td>${e.creator || ''}</td>
+        <td>${e.desc || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
   });
 
+// 🔹 Gerar PDF
+document.getElementById('pdfBtn').addEventListener('click', async () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 10;
+
+  doc.setFontSize(16);
+  doc.text('Agenda de Eventos', 10, y); y += 10;
+  doc.setFontSize(12);
+
+  const snapshot = await db.collection('events').orderBy('date','asc').orderBy('time','asc').get();
+  snapshot.forEach(d => {
+    const e = d.data();
+    doc.text(`Título: ${e.title}`, 10, y); y += 6;
+    doc.text(`Data: ${e.date} Hora: ${e.time || ''}`, 10, y); y += 6;
+    doc.text(`Criador: ${e.creator}`, 10, y); y += 6;
+    doc.text(`Descrição: ${e.desc}`, 10, y); y += 8;
+    if (y > 270) { doc.addPage(); y = 10; }
+  });
+
+  doc.save('agenda.pdf');
+  showToast("PDF gerado!");
+});
 </script>
 </body>
 </html>
-
