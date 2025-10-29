@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda Firebase Aprimorada</title>
+<title>Agenda Firebase Elegante</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -15,49 +15,196 @@
 <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 
 <style>
-body { font-family: 'Inter', sans-serif; margin: 20px; background:#f5f6fb; color:#222; }
-h1 { color:#333; }
-input, select, textarea, button { margin: 4px 0; padding: 8px 10px; font-size:14px; border-radius: 4px; border: 1px solid #ddd; }
-button { cursor:pointer; background: #007bff; color: white; border: none; font-weight: bold; }
-button:hover:not(:disabled) { background: #0056b3; }
-button:disabled { background: #ccc; cursor: not-allowed; }
-table { border-collapse: collapse; width: 100%; margin-top:10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
-th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-th { background: #f0f0f0; }
-.delete-btn { background: #dc3545; padding: 4px 8px; font-size: 12px; }
-.delete-btn:hover { background: #c82333; }
+/* VARIÁVEIS DE COR */
+:root {
+    --primary-color: #007bff; /* Azul */
+    --secondary-color: #6c757d; /* Cinza */
+    --background-light: #f5f6fb; /* Fundo principal */
+    --surface-light: #ffffff; /* Fundo dos cards e painéis */
+    --border-light: #e9ecef;
+    --text-dark: #212529;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
 
-/* Layout dos painéis */
+/* Base e Tipografia */
+body { 
+    font-family: 'Inter', sans-serif; 
+    margin: 0; 
+    padding: 30px; 
+    background: var(--background-light); 
+    color: var(--text-dark); 
+}
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+h1 { 
+    color: var(--primary-color); 
+    font-weight: 700;
+    border-bottom: 3px solid #ffc107; /* Amarelo de destaque */
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+h2, h3 { color: var(--text-dark); border-bottom: 1px solid var(--border-light); padding-bottom: 5px; margin-top: 25px; }
+
+/* Formulário e Inputs */
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+input, select, textarea { 
+    flex-grow: 1; /* Inputs ocupam o espaço disponível */
+    padding: 12px 15px; 
+    font-size: 15px; 
+    border-radius: 8px; 
+    border: 1px solid var(--border-light); 
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 0.3s;
+    margin: 4px 0;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+.time-selector-group {
+    display: inline-flex;
+    gap: 5px;
+}
+.time-selector-group select {
+    width: 80px;
+}
+
+
+/* Botões */
+button { 
+    cursor:pointer; 
+    background: var(--primary-color); 
+    color: var(--surface-light); 
+    border: none; 
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 500; 
+    border-radius: 8px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    margin-top: 10px;
+}
+button:hover:not(:disabled) { 
+    background: #0056b3; 
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+button:disabled { 
+    background: var(--secondary-color); 
+    opacity: 0.6;
+    cursor: not-allowed; 
+    box-shadow: none;
+}
+#loginBtn {
+    background: var(--secondary-color);
+    margin-right: 15px;
+}
+#loginBtn:hover:not(:disabled) {
+    background: #5a6268;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+.header-info {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+#userInfo {
+    font-weight: 500;
+    color: #333;
+}
+
+/* Tabelas (Todos os Eventos) */
+table { 
+    border-collapse: separate; 
+    border-spacing: 0;
+    width: 100%; 
+    margin-top: 15px; 
+    box-shadow: var(--shadow-light); 
+    background: var(--surface-light); 
+    border-radius: 8px;
+    overflow: hidden; /* Para manter o arredondamento */
+}
+th, td { 
+    border-bottom: 1px solid var(--border-light); 
+    padding: 12px 15px; 
+}
+th { 
+    background: var(--background-light); 
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    font-size: 12px;
+}
+tr:last-child td {
+    border-bottom: none;
+}
+.delete-btn { 
+    background: #dc3545; /* Vermelho para exclusão */
+    padding: 6px 10px; 
+    font-size: 13px;
+    border-radius: 4px;
+}
+.delete-btn:hover { 
+    background: #c82333; 
+}
+
+/* Layout dos painéis (Dashboard) */
 #dashboard {
     display: flex;
     gap: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 25px;
+    margin-bottom: 30px;
 }
 .panel {
     flex: 1;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    background: var(--surface-light);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-light);
+    transition: transform 0.3s;
+}
+.panel:hover {
+    transform: translateY(-2px);
+}
+.panel h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-light);
 }
 .event-item {
-    padding: 5px 0;
-    border-bottom: 1px dashed #eee;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-light);
     font-size: 14px;
 }
 .event-item:last-child {
     border-bottom: none;
 }
 .event-item strong {
-    color: #007bff;
+    color: var(--primary-color);
+    font-weight: 500;
 }
 
 /* Estilos do Toast */
 .toast {
   position: fixed; right: 15px; bottom: 15px;
-  background: #333; color: #fff; padding: 10px 14px;
-  border-radius: 8px; opacity: 0; transition: opacity 0.3s ease;
+  background: var(--text-dark); 
+  color: var(--surface-light); 
+  padding: 12px 18px;
+  border-radius: 8px; 
+  opacity: 0; 
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
 }
 .toast.show { opacity: 1; }
@@ -65,48 +212,55 @@ th { background: #f0f0f0; }
 </head>
 <body>
 
-<h1>📅 Agenda de Eventos</h1>
+<div class="container">
 
-<div>
-  <button id="loginBtn">Login Google / Sair</button>
-  <span id="userInfo">Carregando...</span>
-</div>
+    <h1>📅 Agenda de Eventos</h1>
 
-<div id="dashboard">
-    <div class="panel">
-        <h3>Últimos Criados</h3>
-        <div id="latestEvents">Carregando...</div>
+    <div class="header-info">
+      <button id="loginBtn">Login Google / Sair</button>
+      <span id="userInfo">Carregando...</span>
     </div>
-    <div class="panel">
-        <h3>Próximos Eventos</h3>
-        <div id="upcomingEvents">Carregando...</div>
+
+    <div id="dashboard">
+        <div class="panel">
+            <h3>Últimos Criados</h3>
+            <div id="latestEvents">Carregando...</div>
+        </div>
+        <div class="panel">
+            <h3>Próximos Eventos</h3>
+            <div id="upcomingEvents">Carregando...</div>
+        </div>
     </div>
+
+    <h2>Novo Evento</h2>
+    <div class="input-group">
+        <input id="title" placeholder="Título" />
+        <input type="date" id="date" />
+    </div>
+
+    <div class="input-group">
+        <div class="time-selector-group">
+            <select id="timeHour"></select>
+            <select id="timeMinute"></select>
+        </div>
+        <input id="creator" placeholder="Criador" />
+    </div>
+    
+    <textarea id="desc" placeholder="Descrição"></textarea><br>
+    <button id="save">Salvar evento</button>
+
+    <h2>Todos os Eventos</h2>
+    <table>
+      <thead>
+        <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="eventsBody"><tr><td colspan="6">Carregando eventos...</td></tr></tbody>
+    </table>
+
+    <br>
+    <button id="pdfBtn">📄 Gerar PDF (Formato Tabela)</button>
+
 </div>
-
-<h2>Novo Evento</h2>
-<input id="title" placeholder="Título" /><br>
-<input type="date" id="date" /><br>
-
-<div style="display:inline-block; margin: 4px 0;">
-    <select id="timeHour" style="width: 80px;"></select> :
-    <select id="timeMinute" style="width: 80px;"></select>
-</div>
-<br>
-
-<input id="creator" placeholder="Criador" /><br>
-<textarea id="desc" placeholder="Descrição"></textarea><br>
-<button id="save">Salvar evento</button>
-
-<h2>Todos os Eventos</h2>
-<table>
-  <thead>
-    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th><th>Ações</th></tr>
-  </thead>
-  <tbody id="eventsBody"><tr><td colspan="6">Carregando eventos...</td></tr></tbody>
-</table>
-
-<br>
-<button id="pdfBtn">📄 Gerar PDF (Formato Tabela)</button>
 
 <div id="toast" class="toast"></div>
 
@@ -132,8 +286,8 @@ const toast = document.getElementById('toast');
 const tbody = document.getElementById('eventsBody');
 const titleI = document.getElementById('title');
 const dateI = document.getElementById('date');
-const timeHourI = document.getElementById('timeHour'); // Novo
-const timeMinuteI = document.getElementById('timeMinute'); // Novo
+const timeHourI = document.getElementById('timeHour');
+const timeMinuteI = document.getElementById('timeMinute');
 const creatorI = document.getElementById('creator');
 const descI = document.getElementById('desc');
 const saveBtn = document.getElementById('save');
@@ -189,7 +343,7 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
-// 🔹 Botão de login / logout (Usando Pop-up, conforme corrigido)
+// 🔹 Botão de login / logout (Usando Pop-up)
 loginBtn.addEventListener('click', async () => {
   if (currentUser && !currentUser.isAnonymous) {
     await auth.signOut();
@@ -199,7 +353,7 @@ loginBtn.addEventListener('click', async () => {
     provider.addScope('profile');
     provider.addScope('email');
     try {
-      await auth.signInWithPopup(provider); // Corrigido para Popup
+      await auth.signInWithPopup(provider); 
       showToast("Login Google realizado com sucesso!");
     } catch (e) {
       console.error(e);
@@ -299,7 +453,7 @@ function renderEvents(targetDiv, events, type = 'table') {
     } else if (type === 'list') {
         targetDiv.innerHTML = '';
         if (events.length === 0) {
-             targetDiv.innerHTML = '<p style="margin: 0; font-size:12px;">Nenhum evento encontrado.</p>';
+             targetDiv.innerHTML = '<p style="margin: 0; font-size:12px; color: var(--secondary-color);">Nenhum evento encontrado.</p>';
              return;
         }
         events.forEach(e => {
@@ -342,12 +496,10 @@ db.collection('events')
  */
 function updateDashboards(allEvents) {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
     
     // --- Próximos Eventos (Filtra eventos futuros, ordena por proximidade)
     const upcomingEvents = allEvents
         .filter(e => {
-            // Cria uma string de data/hora completa para comparação
             const eventDateTime = new Date(`${e.date}T${e.time}`);
             return eventDateTime >= now;
         })
@@ -356,7 +508,6 @@ function updateDashboards(allEvents) {
     renderEvents(upcomingEventsDiv, upcomingEvents, 'list');
 
     // --- Últimos Criados (Ordena por 'createdAt' - Timestamp do servidor)
-    // Para obter os "Últimos Criados", fazemos uma nova query, ordenando por createdAt
     db.collection('events')
         .orderBy('createdAt', 'desc')
         .limit(5)
@@ -381,18 +532,14 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Dados da Tabela
         const head = [['Título', 'Data', 'Hora', 'Criador', 'Descrição']];
         const rows = [];
         
-        // Pega os dados da tabela principal para garantir que estão atualizados
         const eventRows = document.querySelectorAll('#eventsBody tr');
         
         eventRows.forEach(row => {
-            // Filtra linhas que não são a mensagem de 'Nenhum evento' e que têm 6 células (5 + Ações)
             if (row.children.length === 6) { 
                 const cells = row.querySelectorAll('td');
-                // Adiciona apenas as 5 primeiras células (sem a coluna Ações)
                 rows.push([
                     cells[0].textContent,
                     cells[1].textContent,
@@ -408,11 +555,9 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
             return;
         }
 
-        // Título
         doc.setFontSize(18);
         doc.text('Agenda de Eventos (Formato Tabela)', 10, 15);
         
-        // Geração da Tabela usando jspdf-autotable
         doc.autoTable({
             startY: 25,
             head: head,
@@ -421,11 +566,11 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
             headStyles: { fillColor: [0, 123, 255] }, // Azul
             styles: { fontSize: 10, cellPadding: 3 },
             columnStyles: {
-                0: { cellWidth: 35 }, // Título
-                1: { cellWidth: 20 }, // Data
-                2: { cellWidth: 15 }, // Hora
-                3: { cellWidth: 25 }, // Criador
-                4: { cellWidth: 'auto' } // Descrição
+                0: { cellWidth: 35 }, 
+                1: { cellWidth: 20 }, 
+                2: { cellWidth: 15 }, 
+                3: { cellWidth: 25 }, 
+                4: { cellWidth: 'auto' } 
             }
         });
 
