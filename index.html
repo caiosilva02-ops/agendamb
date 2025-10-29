@@ -125,21 +125,26 @@ auth.onAuthStateChanged(async user => {
 });
 
 // 🔹 Botão de login / logout
+// 🔹 Botão de login / logout
 loginBtn.addEventListener('click', async () => {
   if (currentUser && !currentUser.isAnonymous) {
-    // Se logado com conta Google, faz logout
     await auth.signOut();
     showToast("Deslogado com sucesso");
   } else {
-    // Se anônimo, ou deslogado, inicia login Google
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
     try {
-      await auth.signInWithRedirect(provider);
+      // ❗ ALTERAÇÃO AQUI: De 'signInWithRedirect' para 'signInWithPopup'
+      await auth.signInWithPopup(provider); 
+      // O 'auth.onAuthStateChanged' será disparado automaticamente após o pop-up ser fechado
+      showToast("Login Google realizado com sucesso!");
     } catch (e) {
       console.error(e);
-      showToast("Erro no login Google");
+      // Se o usuário fechar o pop-up, o código é 'auth/popup-closed-by-user', que não é um erro real.
+      if (e.code !== 'auth/popup-closed-by-user') {
+        showToast("Erro no login Google: " + e.message);
+      }
     }
   }
 });
@@ -281,3 +286,4 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
