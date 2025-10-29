@@ -3,28 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda Firebase</title>
+<title>Agenda Firebase Aprimorada</title>
 
-<!-- Firebase -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body { font-family: 'Inter', sans-serif; margin: 20px; background:#f5f6fb; color:#222; }
 h1 { color:#333; }
-input, textarea, button { margin: 4px 0; padding: 6px; font-size:14px; }
-button { cursor:pointer; }
-table { border-collapse: collapse; width: 100%; margin-top:10px; }
-th, td { border: 1px solid #ccc; padding: 8px; }
+input, textarea, button { margin: 4px 0; padding: 8px 10px; font-size:14px; border-radius: 4px; border: 1px solid #ddd; }
+button { cursor:pointer; background: #007bff; color: white; border: none; font-weight: bold; }
+button:hover:not(:disabled) { background: #0056b3; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+table { border-collapse: collapse; width: 100%; margin-top:10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
+th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
 th { background: #f0f0f0; }
+.delete-btn { background: #dc3545; padding: 4px 8px; font-size: 12px; }
+.delete-btn:hover { background: #c82333; }
+
+/* Estilos do Toast */
 .toast {
   position: fixed; right: 15px; bottom: 15px;
   background: #333; color: #fff; padding: 10px 14px;
   border-radius: 8px; opacity: 0; transition: opacity 0.3s ease;
+  z-index: 1000;
 }
 .toast.show { opacity: 1; }
 </style>
@@ -49,9 +56,9 @@ th { background: #f0f0f0; }
 <h2>Eventos</h2>
 <table>
   <thead>
-    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th></tr>
+    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th><th>Ações</th></tr>
   </thead>
-  <tbody id="eventsBody"><tr><td colspan="5">Carregando eventos...</td></tr></tbody>
+  <tbody id="eventsBody"><tr><td colspan="6">Carregando eventos...</td></tr></tbody>
 </table>
 
 <br>
@@ -60,6 +67,8 @@ th { background: #f0f0f0; }
 <div id="toast" class="toast"></div>
 
 <script>
+// NOTA: Esta API Key é apenas para fins de demonstração no navegador.
+// Em produção, use Variáveis de Ambiente ou restrições de API Key rigorosas.
 const firebaseConfig = {
   apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
   authDomain: "agendadigital-44dc9.firebaseapp.com",
@@ -73,6 +82,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Elementos DOM
 const loginBtn = document.getElementById('loginBtn');
 const userInfo = document.getElementById('userInfo');
 const toast = document.getElementById('toast');
@@ -82,6 +92,7 @@ const dateI = document.getElementById('date');
 const timeI = document.getElementById('time');
 const creatorI = document.getElementById('creator');
 const descI = document.getElementById('desc');
+const saveBtn = document.getElementById('save'); // Pegando o botão para desabilitar
 
 let currentUser = null;
 
@@ -104,6 +115,7 @@ auth.onAuthStateChanged(async user => {
     if (!creatorI.value) creatorI.value = name;
   } else {
     try {
+      // Tenta logar anonimamente se não houver usuário logado
       await auth.signInAnonymously();
     } catch (err) {
       console.error(err);
@@ -115,9 +127,11 @@ auth.onAuthStateChanged(async user => {
 // 🔹 Botão de login / logout
 loginBtn.addEventListener('click', async () => {
   if (currentUser && !currentUser.isAnonymous) {
+    // Se logado com conta Google, faz logout
     await auth.signOut();
     showToast("Deslogado com sucesso");
   } else {
+    // Se anônimo, ou deslogado, inicia login Google
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
@@ -130,8 +144,28 @@ loginBtn.addEventListener('click', async () => {
   }
 });
 
+/**
+ * 🔹 Função para deletar um evento
+ * @param {string} id - O ID do documento no Firestore
+ */
+async function deleteEvent(id) {
+    if (!confirm("Tem certeza que deseja excluir este evento?")) {
+        return;
+    }
+    try {
+        await db.collection('events').doc(id).delete();
+        showToast("Evento excluído!");
+    } catch (err) {
+        console.error("Erro ao excluir evento:", err);
+        showToast("Erro ao excluir evento");
+    }
+}
+// Torna a função acessível no escopo global para o 'onclick'
+window.deleteEvent = deleteEvent; 
+
+
 // 🔹 Salvar evento
-document.getElementById('save').addEventListener('click', async () => {
+saveBtn.addEventListener('click', async () => {
   const title = titleI.value.trim();
   const date = dateI.value;
   const time = timeI.value;
@@ -142,6 +176,8 @@ document.getElementById('save').addEventListener('click', async () => {
     showToast("Título e data são obrigatórios");
     return;
   }
+  
+  saveBtn.disabled = true; // Desabilita o botão
 
   try {
     await db.collection('events').add({
@@ -149,43 +185,59 @@ document.getElementById('save').addEventListener('click', async () => {
       createdBy: currentUser ? currentUser.uid : null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    
     showToast("Evento salvo!");
+    
+    // Limpeza completa do formulário (Melhoria UX)
     titleI.value = '';
+    dateI.value = ''; 
+    timeI.value = '';
     descI.value = '';
+
   } catch (err) {
     console.error(err);
     showToast("Erro ao salvar evento");
+  } finally {
+    saveBtn.disabled = false; // Habilita o botão
   }
 });
 
 // 🔹 Listener em tempo real para eventos
 db.collection('events')
-  .orderBy('date','desc')
-  .orderBy('time','desc')
+  // Ordenação corrigida: 'asc' para mostrar eventos próximos primeiro (do mais antigo para o mais novo)
+  .orderBy('date','asc') 
+  .orderBy('time','asc')
   .onSnapshot(snapshot => {
     tbody.innerHTML = '';
     if (snapshot.empty) {
-      tbody.innerHTML = '<tr><td colspan="5">Nenhum evento</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6">Nenhum evento</td></tr>'; // Colspan ajustado para 6
       return;
     }
     snapshot.forEach(doc => {
       const e = doc.data();
       const tr = document.createElement('tr');
+      // Inclui o ID do documento e o botão Excluir na última coluna
       tr.innerHTML = `
         <td>${e.title || ''}</td>
         <td>${e.date || ''}</td>
         <td>${e.time || ''}</td>
         <td>${e.creator || ''}</td>
         <td>${e.desc || ''}</td>
+        <td>
+            <button class="delete-btn" onclick="deleteEvent('${doc.id}')">Excluir</button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
+  }, error => {
+    console.error("Erro ao receber eventos:", error);
+    showToast("Erro ao carregar a lista de eventos.");
   });
 
 // 🔹 Gerar PDF com todos os eventos
 document.getElementById('pdfBtn').addEventListener('click', () => {
   try {
-    const { jsPDF } = window.jspdf;  // ✅ correção
+    const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 10;
 
@@ -194,20 +246,28 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
     y += 10;
     doc.setFontSize(12);
 
+    // Seleciona todas as linhas da tabela exceto a que indica 'Nenhum evento'
     const rows = document.querySelectorAll('#eventsBody tr');
-    if (rows.length === 0) {
+    
+    // Filtra linhas que não são a mensagem de 'Nenhum evento'
+    const eventRows = Array.from(rows).filter(row => row.children.length === 6); 
+
+    if (eventRows.length === 0) {
       showToast("Nenhum evento para gerar PDF");
       return;
     }
 
-    rows.forEach(row => {
-      const cells = row.querySelectorAll('td');
-      if (cells.length < 5) return;
+    eventRows.forEach(row => {
+      // Pega as primeiras 5 células (Título, Data, Hora, Criador, Descrição)
+      const cells = row.querySelectorAll('td'); 
+      if (cells.length < 5) return; 
+      
       doc.text(`Título: ${cells[0].textContent}`, 10, y); y += 6;
       doc.text(`Data: ${cells[1].textContent} Hora: ${cells[2].textContent}`, 10, y); y += 6;
       doc.text(`Criador: ${cells[3].textContent}`, 10, y); y += 6;
       doc.text(`Descrição: ${cells[4].textContent}`, 10, y); y += 8;
-      if (y > 270) { doc.addPage(); y = 10; }
+      
+      if (y > 270) { doc.addPage(); y = 10; } // Quebra de página
     });
 
     doc.save('agenda.pdf');
@@ -221,4 +281,3 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
-
