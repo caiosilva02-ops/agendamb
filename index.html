@@ -3,115 +3,132 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda Futurista [Dark Mode]</title>
+<title>Agenda Clássica Escolar</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 
 <style>
-/* VARIÁVEIS DE COR (Dark Mode) */
+/* VARIÁVEIS DE COR (Clássico/Escolar) */
 :root {
-    --primary-color: #00eaff; /* Ciano Neon (Destaque) */
-    --secondary-color: #ff007f; /* Magenta Neon (Ação) */
-    --background-dark: #121212; /* Fundo principal escuro */
-    --surface-dark: #1f1f1f; /* Fundo dos cards/painéis */
-    --border-dark: #333333;
-    --text-light: #e0e0e0;
-    --shadow-dark: 0 8px 16px rgba(0, 0, 0, 0.4);
-    --success-color: #38c172; /* Verde para Edição */
-    --danger-color: #e3342f; /* Vermelho para Excluir */
+    --primary-color: #004d80; /* Azul Marinho Escolar (Principal) */
+    --secondary-color: #8B4513; /* Marrom Sepia/Terra (Destaque/Clássico) */
+    --background-light: #f4f2e8; /* Fundo Creme / Cor de Pergaminho */
+    --surface-light: #ffffff; /* Fundo dos Cards/Painéis (Branco Limpo) */
+    --border-subtle: #d0cbbc; /* Borda Suave */
+    --text-dark: #333333; /* Cor do Texto Principal */
+    --shadow-subtle: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --success-color: #38c172; /* Verde (Ação Positiva) */
+    --danger-color: #e3342f; /* Vermelho (Ação Negativa) */
 }
 
 /* Base e Tipografia */
 body { 
-    font-family: 'Inter', sans-serif; 
+    font-family: 'Lora', serif; /* Fonte serifada para legibilidade do corpo */
     margin: 0; 
     padding: 30px; 
-    background: var(--background-dark); 
-    color: var(--text-light); 
+    background: var(--background-light); 
+    color: var(--text-dark); 
     transition: background-color 0.5s;
+    line-height: 1.6;
 }
 .container {
-    max-width: 1200px;
+    max-width: 1000px; /* Um pouco mais estreito para foco elegante */
     margin: 0 auto;
+    background: var(--surface-light);
+    padding: 40px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-subtle); /* Sombra suave para efeito de papel */
 }
 h1 { 
+    font-family: 'Playfair Display', serif; /* Fonte elegante para títulos */
     color: var(--primary-color); 
     font-weight: 700;
-    text-shadow: 0 0 5px var(--primary-color);
-    border-bottom: 2px solid var(--secondary-color); /* Linha de destaque */
+    text-align: center;
+    border-bottom: 3px double var(--secondary-color); /* Linha dupla clássica */
     padding-bottom: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    text-transform: uppercase;
 }
-h2, h3 { 
-    color: var(--text-light); 
-    font-weight: 500;
-    border-bottom: 1px solid var(--border-dark); 
+h2 { 
+    font-family: 'Playfair Display', serif; 
+    color: var(--primary-color); 
+    font-weight: 700;
+    border-bottom: 1px solid var(--border-subtle); 
     padding-bottom: 5px; 
-    margin-top: 25px; 
+    margin-top: 35px; 
+    font-size: 1.8em;
 }
-h2 { color: var(--secondary-color); }
+h3 { 
+    font-family: 'Lora', serif; 
+    color: var(--secondary-color); 
+    font-weight: 700;
+    border-bottom: 1px dashed var(--border-subtle); 
+    padding-bottom: 5px; 
+    margin-top: 0; 
+    font-size: 1.2em;
+}
 
 
 /* Layout e Formulário */
 .form-section {
-    background: var(--surface-dark);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-dark);
+    background: #fdfdfd; /* Fundo levemente diferente para o formulário */
+    padding: 25px;
+    border-radius: 5px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Sombra mais discreta */
     margin-bottom: 30px;
 }
 .input-group {
     display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 input, select, textarea { 
     flex-grow: 1; 
     padding: 12px 15px; 
-    font-size: 15px; 
-    border-radius: 8px; 
-    border: 1px solid var(--border-dark); 
-    background: var(--background-dark);
-    color: var(--text-light);
-    box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+    font-size: 16px; 
+    border-radius: 4px; 
+    border: 1px solid var(--border-subtle); 
+    background: var(--surface-light);
+    color: var(--text-dark);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); /* Sombra interna sutil */
     transition: border-color 0.3s, box-shadow 0.3s;
     margin: 0;
+    font-family: 'Lora', serif;
 }
 input:focus, select:focus, textarea:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 5px var(--primary-color);
+    box-shadow: 0 0 5px rgba(0, 77, 128, 0.3); /* Sombra azul suave no foco */
 }
-/* **AJUSTE PROPORCIONAL DO TEXTAREA** */
 textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 100px;
     width: 100%; 
-    box-sizing: border-box; /* Garante que padding e border estão dentro do width */
+    box-sizing: border-box;
     margin-top: 5px;
 }
 
-/* Estilo: Grupo de Seletor de Hora com Ícone */
+/* Estilo: Grupo de Seletor de Hora com Ícone (Ícone Clássico) */
 .time-selector-wrapper {
     display: flex;
     align-items: center;
-    border: 1px solid var(--border-dark);
-    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
     padding: 0 10px;
-    background: var(--background-dark);
+    background: var(--surface-light);
     flex-grow: 1;
 }
 .time-selector-icon {
     font-size: 18px;
-    color: var(--primary-color); /* Neon */
-    text-shadow: 0 0 3px var(--primary-color);
+    color: var(--secondary-color); /* Marrom Destaque */
     margin-right: 10px;
 }
 .time-selector-group {
@@ -122,621 +139,183 @@ textarea {
 }
 .time-selector-group select {
     flex-grow: 0;
-    width: 70px; 
+    width: 80px; 
     padding: 8px 5px; 
     margin: 0;
     border: none; 
     box-shadow: none; 
     background: transparent;
+    cursor: pointer;
 }
 
 
-/* Botões */
+/* Botões (Estilo Mais Formal) */
 button { 
     cursor:pointer; 
     background: var(--primary-color); 
-    color: var(--background-dark); /* Texto escuro no neon */
+    color: var(--surface-light); 
     border: 1px solid var(--primary-color); 
-    padding: 10px 20px;
+    padding: 12px 25px;
     font-size: 15px;
     font-weight: 700; 
-    border-radius: 8px;
-    transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+    border-radius: 4px;
+    transition: background-color 0.2s, box-shadow 0.2s, color 0.2s;
     margin-top: 15px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 button:hover:not(:disabled) { 
-    background: transparent; 
-    color: var(--primary-color);
-    box-shadow: 0 0 10px var(--primary-color);
+    background: #0060a0; /* Azul um pouco mais escuro */
+    border-color: #0060a0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 button:disabled { 
-    background: var(--border-dark); 
-    color: var(--text-light);
-    opacity: 0.7;
+    background: #cccccc; 
+    color: #888888;
+    opacity: 1;
     cursor: not-allowed; 
     box-shadow: none;
+    border-color: #cccccc;
 }
 #loginBtn {
     background: var(--secondary-color);
     border-color: var(--secondary-color);
-    color: var(--background-dark);
-    margin-right: 15px;
+    color: var(--surface-light);
+    margin-right: 20px;
 }
 #loginBtn:hover:not(:disabled) {
-    background: transparent;
-    color: var(--secondary-color);
-    box-shadow: 0 0 10px var(--secondary-color);
+    background: #a05a26; /* Marrom um pouco mais escuro */
+    border-color: #a05a26;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 .header-info {
     display: flex;
     align-items: center;
     padding: 10px 0;
     margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 #userInfo {
     font-weight: 400;
-    color: var(--text-light);
+    color: var(--text-dark);
+    font-style: italic;
+    font-size: 0.95em;
 }
 
-/* Painéis (Dashboard) */
+/* Painéis (Dashboard) - Design de Fichas/Avisos */
 #dashboard {
     display: flex;
-    gap: 20px;
+    gap: 30px;
     margin-top: 30px;
     margin-bottom: 40px;
 }
 .panel {
     flex: 1;
-    background: var(--surface-dark);
+    background: #fcfcfc;
     padding: 20px;
-    border-radius: 12px;
-    border-left: 5px solid var(--primary-color);
-    box-shadow: var(--shadow-dark);
+    border-radius: 8px;
+    border-left: 5px solid var(--secondary-color); /* Borda lateral de destaque */
+    box-shadow: var(--shadow-subtle);
     transition: transform 0.3s;
 }
 .panel h3 {
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-dark);
+    color: var(--secondary-color);
+    border-bottom: 1px solid var(--border-subtle);
     margin-top: 0;
 }
 .event-item {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--border-dark);
-    font-size: 14px;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--border-subtle); /* Linha pontilhada sutil */
+    font-size: 15px;
 }
 .event-item strong {
-    color: var(--secondary-color);
-    font-weight: 500;
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
-/* Tabelas (Todos os Eventos) */
+/* Tabelas (Todos os Eventos) - Estilo de Livro Razão */
 table { 
-    border-collapse: separate; 
-    border-spacing: 0;
+    border-collapse: collapse; /* Borda colapsada para look de grade */
     width: 100%; 
-    margin-top: 15px; 
-    box-shadow: var(--shadow-dark); 
-    background: var(--surface-dark); 
-    border-radius: 12px;
-    overflow: hidden; 
+    margin-top: 20px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+    background: var(--surface-light); 
+    border: 1px solid var(--primary-color);
 }
 th, td { 
-    border-bottom: 1px solid var(--border-dark); 
-    padding: 14px 15px; 
+    border: 1px solid var(--border-subtle); /* Bordas de grade suaves */
+    padding: 12px 15px; 
+    text-align: left;
 }
 th { 
-    background: var(--background-dark); 
+    background: var(--primary-color); 
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--surface-light);
     text-transform: uppercase;
     font-size: 13px;
+    letter-spacing: 1px;
+    border-color: var(--primary-color);
 }
+tr:nth-child(even) {
+    background-color: #f9f9f9; /* Linhas zebradas suaves */
+}
+
 
 /* Botões de Ação na Tabela */
 .action-btn {
-    padding: 6px 12px; 
-    font-size: 12px;
+    padding: 8px 15px; 
+    font-size: 13px;
     border-radius: 4px;
-    margin-right: 5px;
+    margin-right: 8px;
     margin-top: 0;
-    font-weight: 500;
+    font-weight: 700;
     text-transform: none;
 }
 .edit-btn {
     background: var(--success-color); 
     border-color: var(--success-color);
-    color: var(--background-dark);
+    color: var(--surface-light);
 }
 .edit-btn:hover {
-    background: transparent;
-    color: var(--success-color);
-    box-shadow: 0 0 8px var(--success-color);
+    background: #309f60;
+    border-color: #309f60;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 .delete-btn { 
     background: var(--danger-color); 
     border-color: var(--danger-color);
-    color: var(--background-dark);
+    color: var(--surface-light);
 }
 .delete-btn:hover { 
-    background: transparent;
-    color: var(--danger-color);
-    box-shadow: 0 0 8px var(--danger-color);
+    background: #c72d29; 
+    border-color: #c72d29;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 #cancelEdit {
     background: var(--danger-color);
     border-color: var(--danger-color);
 }
 #cancelEdit:hover {
-    background: transparent;
-    color: var(--danger-color);
-    box-shadow: 0 0 10px var(--danger-color);
+    background: #c72d29;
+    border-color: #c72d29;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 /* Estilos do Toast */
 .toast {
-  position: fixed; right: 15px; bottom: 15px;
-  background: var(--secondary-color); 
-  color: var(--background-dark); 
-  padding: 12px 18px;
-  border-radius: 8px; 
-  opacity: 0; 
-  transition: opacity 0.4s ease;
-  box-shadow: 0 0 10px var(--secondary-color);
-  z-index: 1000;
-  font-weight: 500;
+    position: fixed; right: 20px; bottom: 20px;
+    background: var(--secondary-color); 
+    color: var(--surface-light); 
+    padding: 15px 25px;
+    border-radius: 4px; 
+    opacity: 0; 
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    font-weight: 500;
+    font-size: 16px;
+    transform: translateY(100%);
 }
-.toast.show { opacity: 1; }
+.toast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
-<body>
-
-<div class="container">
-
-    <h1>📅 Agenda de Eventos</h1>
-
-    <div class="header-info">
-      <button id="loginBtn">Login Google / Sair</button>
-      <span id="userInfo">Aguardando autenticação...</span>
-    </div>
-
-    <div id="dashboard">
-        <div class="panel">
-            <h3>Últimos Criados</h3>
-            <div id="latestEvents">Carregando...</div>
-        </div>
-        <div class="panel">
-            <h3>Próximos Eventos</h3>
-            <div id="upcomingEvents">Carregando...</div>
-        </div>
-    </div>
-
-    <h2>[Acesso] Novo Evento</h2>
-    <div class="form-section">
-        <div class="input-group">
-            <input id="title" placeholder="Título" />
-            <input type="date" id="date" />
-        </div>
-
-        <div class="input-group">
-            <div class="time-selector-wrapper">
-                <span class="time-selector-icon">⌚</span>
-                <div class="time-selector-group">
-                    <select id="timeHour"></select> : 
-                    <select id="timeMinute"></select>
-                </div>
-            </div>
-            
-            <input id="creator" placeholder="Criador" />
-        </div>
-        
-        <textarea id="desc" placeholder="Descrição"></textarea>
-        
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button id="save" style="flex-grow: 1;">Salvar evento</button>
-            <button id="cancelEdit" style="display:none; flex-grow: 1; background: var(--danger-color); border-color: var(--danger-color);">Cancelar Edição</button>
-        </div>
-    </div>
-
-    <h2>[Data Grid] Todos os Eventos</h2>
-    <table>
-      <thead>
-        <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th><th>Ações</th></tr>
-      </thead>
-      <tbody id="eventsBody"><tr><td colspan="6">Carregando eventos...</td></tr></tbody>
-    </table>
-
-    <br>
-    <button id="pdfBtn" style="margin-bottom: 50px;">📄 Gerar PDF (Formato Tabela)</button>
-
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script>
-// NOTA: Mantenha suas credenciais privadas.
-const firebaseConfig = {
-  apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
-  authDomain: "agendadigital-44dc9.firebaseapp.com",
-  projectId: "agendadigital-44dc9",
-  storageBucket: "agendadigital-44dc9.firebasestorage.app",
-  messagingSenderId: "569121363405",
-  appId: "1:569121363405:web:1c7ab280393c090c40aa72" 
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// Elementos DOM
-const loginBtn = document.getElementById('loginBtn');
-const userInfo = document.getElementById('userInfo');
-const toast = document.getElementById('toast');
-const tbody = document.getElementById('eventsBody');
-const titleI = document.getElementById('title');
-const dateI = document.getElementById('date');
-const timeHourI = document.getElementById('timeHour');
-const timeMinuteI = document.getElementById('timeMinute');
-const creatorI = document.getElementById('creator');
-const descI = document.getElementById('desc');
-const saveBtn = document.getElementById('save');
-const cancelEditBtn = document.getElementById('cancelEdit');
-const latestEventsDiv = document.getElementById('latestEvents');
-const upcomingEventsDiv = document.getElementById('upcomingEvents');
-
-
-let currentUser = null;
-let currentEditId = null;
-
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// 🔹 Inicialização do Seletor de Horas/Minutos
-function populateTimeSelectors() {
-    for (let h = 0; h < 24; h++) {
-        const hour = h.toString().padStart(2, '0');
-        const option = new Option(hour, hour);
-        timeHourI.appendChild(option);
-    }
-    for (let m = 0; m < 60; m += 5) { // Incremento de 5 minutos
-        const minute = m.toString().padStart(2, '0');
-        const option = new Option(minute, minute);
-        timeMinuteI.appendChild(option);
-    }
-    timeHourI.value = new Date().getHours().toString().padStart(2, '0');
-    timeMinuteI.value = '00';
-}
-populateTimeSelectors();
-
-
-// 🔹 Mantém login persistente
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-// 🔹 Detecta mudanças de autenticação
-auth.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
-    const name = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email);
-    userInfo.textContent = `Logado como: ${name}`;
-    loginBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
-    if (!creatorI.value) creatorI.value = name;
-  } else {
-    try {
-      await auth.signInAnonymously();
-    } catch (err) {
-      console.error(err);
-      showToast("Erro ao autenticar anonimamente");
-    }
-  }
-});
-
-// 🔹 Botão de login / logout (Usando Pop-up)
-loginBtn.addEventListener('click', async () => {
-  if (currentUser && !currentUser.isAnonymous) {
-    await auth.signOut();
-    showToast("Deslogado com sucesso");
-  } else {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    try {
-      await auth.signInWithPopup(provider); 
-      showToast("Login Google realizado com sucesso!");
-    } catch (e) {
-      console.error(e);
-      if (e.code !== 'auth/popup-closed-by-user') {
-        showToast("Erro no login Google");
-      }
-    }
-  }
-});
-
-/**
- * 🔹 Limpa o formulário e retorna ao modo de criação
- */
-function resetForm() {
-    titleI.value = '';
-    dateI.value = ''; 
-    descI.value = '';
-    timeHourI.value = new Date().getHours().toString().padStart(2, '0');
-    timeMinuteI.value = '00';
-    
-    currentEditId = null;
-    saveBtn.textContent = 'Salvar evento';
-    saveBtn.style.backgroundColor = 'var(--primary-color)';
-    saveBtn.style.borderColor = 'var(--primary-color)';
-    saveBtn.style.color = 'var(--background-dark)';
-    cancelEditBtn.style.display = 'none';
-    
-    if (currentUser && !currentUser.isAnonymous) {
-        creatorI.value = currentUser.displayName || currentUser.email || '';
-    }
-}
-cancelEditBtn.addEventListener('click', resetForm);
-
-
-/**
- * 🔹 Pré-preenche o formulário para edição
- * @param {string} id - O ID do documento no Firestore
- * @param {object} eventData - Os dados do evento
- */
-function editEvent(id, eventData) {
-    currentEditId = id;
-    
-    titleI.value = eventData.title || '';
-    dateI.value = eventData.date || '';
-    creatorI.value = eventData.creator || '';
-    descI.value = eventData.desc || '';
-    
-    const [hour, minute] = (eventData.time || '00:00').split(':');
-    timeHourI.value = hour.padStart(2, '0');
-    timeMinuteI.value = minute.padStart(2, '0');
-    
-    saveBtn.textContent = 'Atualizar evento';
-    saveBtn.style.backgroundColor = 'var(--success-color)';
-    saveBtn.style.borderColor = 'var(--success-color)';
-    saveBtn.style.color = 'var(--background-dark)';
-    cancelEditBtn.style.display = 'inline-block';
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-window.editEvent = editEvent;
-
-
-/**
- * 🔹 Função para deletar um evento
- * @param {string} id - O ID do documento no Firestore
- */
-async function deleteEvent(id) {
-    if (!confirm("Tem certeza que deseja excluir este evento?")) {
-        return;
-    }
-    try {
-        await db.collection('events').doc(id).delete();
-        showToast("Evento excluído!");
-        if (currentEditId === id) {
-            resetForm(); 
-        }
-    } catch (err) {
-        console.error("Erro ao excluir evento:", err);
-        showToast("Erro ao excluir evento");
-    }
-}
-window.deleteEvent = deleteEvent; 
-
-
-// 🔹 Salvar/Atualizar evento
-saveBtn.addEventListener('click', async () => {
-  const title = titleI.value.trim();
-  const date = dateI.value;
-  const time = `${timeHourI.value}:${timeMinuteI.value}`;
-  const creator = creatorI.value.trim();
-  const desc = descI.value.trim();
-
-  if (!title || !date) {
-    showToast("Título e data são obrigatórios");
-    return;
-  }
-  
-  saveBtn.disabled = true;
-
-  try {
-    const eventData = {
-        title, date, time, creator, desc,
-    };
-    
-    if (currentEditId) {
-        // MODO DE EDIÇÃO
-        await db.collection('events').doc(currentEditId).update(eventData);
-        showToast("Evento atualizado!");
-    } else {
-        // MODO DE CRIAÇÃO
-        eventData.createdBy = currentUser ? currentUser.uid : null;
-        eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        await db.collection('events').add(eventData);
-        showToast("Evento salvo!");
-    }
-    
-    resetForm();
-
-  } catch (err) {
-    console.error(err);
-    showToast(`Erro ao ${currentEditId ? 'atualizar' : 'salvar'} evento`);
-  } finally {
-    saveBtn.disabled = false;
-  }
-});
-
-/**
- * 🔹 Renderiza a lista de eventos no painel (todos, próximos, ou recentes)
- */
-function renderEvents(targetDiv, events, type = 'table') {
-    if (type === 'table') {
-        tbody.innerHTML = '';
-        if (events.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="color: var(--secondary-color);">Nenhum evento registrado.</td></tr>';
-            return;
-        }
-        events.forEach(e => {
-            const tr = document.createElement('tr');
-            const eventDataString = JSON.stringify({
-                title: e.title,
-                date: e.date,
-                time: e.time,
-                creator: e.creator,
-                desc: e.desc
-            }).replace(/"/g, "'"); 
-            
-            tr.innerHTML = `
-                <td>${e.title || ''}</td>
-                <td>${e.date || ''}</td>
-                <td>${e.time || ''}</td>
-                <td>${e.creator || ''}</td>
-                <td>${e.desc || ''}</td>
-                <td>
-                    <button class="action-btn edit-btn" 
-                            onclick="editEvent('${e.id}', ${eventDataString})">
-                        Editar
-                    </button>
-                    <button class="action-btn delete-btn" onclick="deleteEvent('${e.id}')">
-                        Excluir
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } else if (type === 'list') {
-        targetDiv.innerHTML = '';
-        if (events.length === 0) {
-             targetDiv.innerHTML = '<p style="margin: 0; font-size:12px; color: var(--secondary-color);">Nenhum evento encontrado.</p>';
-             return;
-        }
-        events.forEach(e => {
-            const div = document.createElement('div');
-            div.className = 'event-item';
-            div.innerHTML = `
-                <strong>${e.date} ${e.time}</strong>: ${e.title} (Criador: ${e.creator})
-            `;
-            targetDiv.appendChild(div);
-        });
-    }
-}
-
-
-// 🔹 Listener em tempo real para todos os eventos
-db.collection('events')
-  .orderBy('date','asc') 
-  .orderBy('time','asc')
-  .onSnapshot(snapshot => {
-    let allEvents = [];
-    if (!snapshot.empty) {
-        snapshot.forEach(doc => {
-            allEvents.push({ id: doc.id, ...doc.data() });
-        });
-    }
-
-    renderEvents(tbody, allEvents, 'table');
-    updateDashboards(allEvents);
-
-  }, error => {
-    console.error("Erro ao receber eventos:", error);
-    showToast("Erro ao carregar a lista de eventos.");
-  });
-
-/**
- * 🔹 Atualiza os painéis "Próximos Eventos" e "Últimos Criados"
- * @param {Array} allEvents - Lista completa de eventos.
- */
-function updateDashboards(allEvents) {
-    const now = new Date();
-    
-    const upcomingEvents = allEvents
-        .filter(e => {
-            const eventDateTime = new Date(`${e.date}T${e.time}`);
-            return eventDateTime >= now;
-        })
-        .slice(0, 5);
-
-    renderEvents(upcomingEventsDiv, upcomingEvents, 'list');
-
-    db.collection('events')
-        .orderBy('createdAt', 'desc')
-        .limit(5)
-        .get()
-        .then(snapshot => {
-            let latest = [];
-            snapshot.forEach(doc => {
-                latest.push({ id: doc.id, ...doc.data() });
-            });
-            renderEvents(latestEventsDiv, latest, 'list');
-        })
-        .catch(err => {
-            console.error("Erro ao carregar eventos recentes:", err);
-            latestEventsDiv.innerHTML = 'Erro ao carregar recentes.';
-        });
-}
-
-
-// 🔹 Gerar PDF com todos os eventos em formato de tabela
-document.getElementById('pdfBtn').addEventListener('click', () => {
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        const head = [['Título', 'Data', 'Hora', 'Criador', 'Descrição']];
-        const rows = [];
-        
-        const eventRows = document.querySelectorAll('#eventsBody tr');
-        
-        eventRows.forEach(row => {
-            if (row.children.length === 6) { 
-                const cells = row.querySelectorAll('td');
-                rows.push([
-                    cells[0].textContent,
-                    cells[1].textContent,
-                    cells[2].textContent,
-                    cells[3].textContent,
-                    cells[4].textContent
-                ]);
-            }
-        });
-
-        if (rows.length === 0) {
-            showToast("Nenhum evento para gerar PDF");
-            return;
-        }
-
-        doc.setFontSize(18);
-        doc.text('Agenda de Eventos (Formato Tabela)', 10, 15);
-        
-        doc.autoTable({
-            startY: 25,
-            head: head,
-            body: rows,
-            theme: 'striped',
-            headStyles: { fillColor: [0, 123, 255] }, 
-            styles: { fontSize: 10, cellPadding: 3 },
-            columnStyles: {
-                0: { cellWidth: 35 }, 
-                1: { cellWidth: 20 }, 
-                2: { cellWidth: 15 }, 
-                3: { cellWidth: 25 }, 
-                4: { cellWidth: 'auto' } 
-            }
-        });
-
-
-        doc.save('agenda_tabela.pdf');
-        showToast("PDF gerado!");
-    } catch (err) {
-        console.error("Erro ao gerar PDF:", err);
-        showToast("Erro ao gerar PDF");
-    }
-});
-
-</script>
-</body>
-</html>
