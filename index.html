@@ -185,7 +185,8 @@ db.collection('events')
 // 🔹 Gerar PDF com todos os eventos
 document.getElementById('pdfBtn').addEventListener('click', () => {
   try {
-    const doc = new window.jspdf.jsPDF();
+    const { jsPDF } = window.jspdf;  // ✅ correção
+    const doc = new jsPDF();
     let y = 10;
 
     doc.setFontSize(16);
@@ -216,6 +217,8 @@ document.getElementById('pdfBtn').addEventListener('click', () => {
     showToast("Erro ao gerar PDF");
   }
 });
+
 </script>
 </body>
 </html>
+
