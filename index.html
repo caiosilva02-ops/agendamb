@@ -14,49 +14,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body {
-  font-family: 'Inter', sans-serif;
-  margin: 20px;
-  background: #f5f6fb;
-  color: #222;
-}
-h1 { color: #333; }
-input, textarea, button {
-  margin: 4px 0;
-  padding: 6px;
-  font-size: 14px;
-}
-button {
-  cursor: pointer;
-  background: #4285f4;
-  border: none;
-  color: #fff;
-  border-radius: 4px;
-  padding: 6px 10px;
-}
-button:hover { background: #3367d6; }
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-th {
-  background: #f0f0f0;
-}
+body { font-family: 'Inter', sans-serif; margin: 20px; background:#f5f6fb; color:#222; }
+h1 { color:#333; }
+input, textarea, button { margin: 4px 0; padding: 6px; font-size:14px; }
+button { cursor:pointer; }
+table { border-collapse: collapse; width: 100%; margin-top:10px; }
+th, td { border: 1px solid #ccc; padding: 8px; }
+th { background: #f0f0f0; }
 .toast {
-  position: fixed;
-  right: 15px;
-  bottom: 15px;
-  background: #333;
-  color: #fff;
-  padding: 10px 14px;
-  border-radius: 8px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  position: fixed; right: 15px; bottom: 15px;
+  background: #333; color: #fff; padding: 10px 14px;
+  border-radius: 8px; opacity: 0; transition: opacity 0.3s ease;
 }
 .toast.show { opacity: 1; }
 </style>
@@ -81,13 +49,7 @@ th {
 <h2>Eventos</h2>
 <table>
   <thead>
-    <tr>
-      <th>Título</th>
-      <th>Data</th>
-      <th>Hora</th>
-      <th>Criador</th>
-      <th>Descrição</th>
-    </tr>
+    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th></tr>
   </thead>
   <tbody id="eventsBody"><tr><td colspan="5">Carregando eventos...</td></tr></tbody>
 </table>
@@ -98,17 +60,15 @@ th {
 <div id="toast" class="toast"></div>
 
 <script>
-// 🔹 Configuração Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
   authDomain: "agendadigital-44dc9.firebaseapp.com",
   projectId: "agendadigital-44dc9",
-  storageBucket: "agendadigital-44dc9.appspot.com",
+  storageBucket: "agendadigital-44dc9.firebasestorage.app",
   messagingSenderId: "569121363405",
   appId: "1:569121363405:web:1c7ab280393c090c40a084"
 };
 
-// 🔹 Inicialização Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -125,14 +85,13 @@ const descI = document.getElementById('desc');
 
 let currentUser = null;
 
-// 🔹 Toast de mensagens
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// 🔹 Persistência local de login
+// 🔹 Mantém login persistente
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 // 🔹 Detecta mudanças de autenticação
@@ -163,10 +122,9 @@ loginBtn.addEventListener('click', async () => {
     provider.addScope('profile');
     provider.addScope('email');
     try {
-      const result = await auth.signInWithPopup(provider);
-      showToast(`Bem-vindo, ${result.user.displayName}!`);
+      await auth.signInWithRedirect(provider);
     } catch (e) {
-      console.error("Erro no login Google:", e);
+      console.error(e);
       showToast("Erro no login Google");
     }
   }
@@ -202,8 +160,8 @@ document.getElementById('save').addEventListener('click', async () => {
 
 // 🔹 Listener em tempo real para eventos
 db.collection('events')
-  .orderBy('date', 'desc')
-  .orderBy('time', 'desc')
+  .orderBy('date','desc')
+  .orderBy('time','desc')
   .onSnapshot(snapshot => {
     tbody.innerHTML = '';
     if (snapshot.empty) {
@@ -225,10 +183,9 @@ db.collection('events')
   });
 
 // 🔹 Gerar PDF com todos os eventos
-document.getElementById('pdfBtn').addEventListener('click', async () => {
+document.getElementById('pdfBtn').addEventListener('click', () => {
   try {
-    const { jsPDF } = window.jspdf; // garante compatibilidade
-    const doc = new jsPDF();
+    const doc = new window.jspdf.jsPDF();
     let y = 10;
 
     doc.setFontSize(16);
@@ -236,19 +193,19 @@ document.getElementById('pdfBtn').addEventListener('click', async () => {
     y += 10;
     doc.setFontSize(12);
 
-    const snapshot = await db.collection('events').orderBy('date','asc').orderBy('time','asc').get();
-
-    if (snapshot.empty) {
+    const rows = document.querySelectorAll('#eventsBody tr');
+    if (rows.length === 0) {
       showToast("Nenhum evento para gerar PDF");
       return;
     }
 
-    snapshot.forEach(d => {
-      const e = d.data();
-      doc.text(`Título: ${e.title || ''}`, 10, y); y += 6;
-      doc.text(`Data: ${e.date || ''} Hora: ${e.time || ''}`, 10, y); y += 6;
-      doc.text(`Criador: ${e.creator || ''}`, 10, y); y += 6;
-      doc.text(`Descrição: ${e.desc || ''}`, 10, y); y += 8;
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 5) return;
+      doc.text(`Título: ${cells[0].textContent}`, 10, y); y += 6;
+      doc.text(`Data: ${cells[1].textContent} Hora: ${cells[2].textContent}`, 10, y); y += 6;
+      doc.text(`Criador: ${cells[3].textContent}`, 10, y); y += 6;
+      doc.text(`Descrição: ${cells[4].textContent}`, 10, y); y += 8;
       if (y > 270) { doc.addPage(); y = 10; }
     });
 
@@ -259,8 +216,6 @@ document.getElementById('pdfBtn').addEventListener('click', async () => {
     showToast("Erro ao gerar PDF");
   }
 });
-
 </script>
 </body>
 </html>
-
