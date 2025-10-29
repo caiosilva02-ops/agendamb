@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Agenda Digital — Firebase (Compartilhada) — Melhorada</title>
+  <title>Agenda Digital — Firebase Compartilhada</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#071022; --card:#0b1220; --accent1:#7c3aed; --accent2:#06b6d4; --muted:#94a3b8; --success:#16a34a; --danger:#ef4444 }
+    :root{--bg:#071022;--card:#0b1220;--accent1:#7c3aed;--accent2:#06b6d4;--muted:#94a3b8;--success:#16a34a;--danger:#ef4444}
     *{box-sizing:border-box}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071022 0%, #071730 60%);color:#e6eef8;margin:0;min-height:100vh}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071022 0%,#071730 60%);color:#e6eef8;margin:0;min-height:100vh}
     .app{max-width:1200px;margin:20px auto;padding:18px}
     header{display:flex;align-items:center;gap:12px}
     .brand{font-weight:800;font-size:20px}
     .tag{font-size:13px;color:var(--muted)}
     .grid{display:grid;grid-template-columns:380px 1fr 320px;gap:18px;margin-top:16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
     input,textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
     textarea{min-height:90px}
@@ -24,9 +24,9 @@
     .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .small{padding:8px 10px;font-size:13px}
     .events-list{display:grid;gap:10px;margin-top:10px}
-    .event{display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));align-items:center}
+    .event{display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));align-items:center}
     .meta{display:flex;gap:12px;align-items:center}
-    .date-chip{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:8px 10px;border-radius:8px;text-align:center;min-width:84px}
+    .date-chip{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));padding:8px 10px;border-radius:8px;text-align:center;min-width:84px}
     .title{font-weight:700}
     .muted{color:var(--muted);font-size:13px}
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
@@ -46,7 +46,7 @@
     <header>
       <div>
         <div class="brand">Agenda Digital — Compartilhada</div>
-        <div class="tag">Firestore • notificações • histórico de atividade</div>
+        <div class="tag">Firestore • Autenticação Google • Histórico de atividade</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
         <div id="userInfo" class="muted" style="font-size:13px">Conectando…</div>
@@ -54,106 +54,135 @@
       </div>
     </header>
 
-    <!-- ... resto do conteúdo (form, lista, etc.) permanece igual ... -->
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h3>Criar / Editar evento</h3>
+          <form id="eventForm">
+            <label for="title">Nome do evento</label>
+            <input id="title" required placeholder="Ex: Reunião com equipe"/>
+            <div class="row">
+              <div>
+                <label for="date">Data</label>
+                <input id="date" type="date" required/>
+              </div>
+              <div>
+                <label for="time">Horário</label>
+                <input id="time" type="time" required/>
+              </div>
+            </div>
+            <label for="creator">Nome do criador</label>
+            <input id="creator" placeholder="Seu nome (auto)"/>
+            <label for="notes">Observações</label>
+            <textarea id="notes" placeholder="Detalhes"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-primary" type="submit">Salvar evento</button>
+              <button id="resetBtn" type="button" class="btn btn-ghost small">Limpar</button>
+            </div>
+            <input type="hidden" id="editingId"/>
+          </form>
+        </div>
 
-    <footer>Feito com ♥ — substitua <code>firebaseConfig</code> pelas credenciais do seu projeto Firebase</footer>
+        <div class="card" style="margin-top:14px">
+          <h4>Exportar / Importar</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="exportJSON" class="btn btn-primary small">Exportar JSON</button>
+            <button id="importJSONBtn" class="btn btn-ghost small">Importar JSON</button>
+            <input id="importFile" type="file" accept="application/json" style="display:none"/>
+            <button id="clearAll" class="btn btn-ghost small">Remover todos</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3>Eventos</h3>
+            <input id="search" placeholder="Pesquisar..." style="padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);min-width:220px"/>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <label>De <input id="fromDate" type="date"/></label>
+            <label>Até <input id="toDate" type="date"/></label>
+            <button id="filterBtn" class="btn btn-ghost small">Filtrar</button>
+            <button id="clearFilter" class="btn btn-ghost small">Limpar</button>
+            <button id="pdfBtn" class="btn btn-primary small">Gerar PDF</button>
+          </div>
+          <div id="eventsList" class="events-list"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;text-align:center">
+          <div id="stats" class="muted">Carregando estatísticas…</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h4>Atividades recentes</h4>
+          <div id="activityList" class="activity-list"><div class="empty">Nenhuma atividade</div></div>
+        </div>
+      </div>
+    </div>
+    <footer>Feito com ♥ — substitua o firebaseConfig pelo seu</footer>
   </div>
 
-  <div class="toast-wrap" id="toastWrap"></div>
+  <div id="toastWrap" class="toast-wrap"></div>
 
-  <!-- libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // CONFIGURAÇÃO FIREBASE
-    const firebaseConfig = {
-      apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
-      authDomain: "agendadigital-44dc9.firebaseapp.com",
-      projectId: "agendadigital-44dc9",
-      storageBucket: "agendadigital-44dc9.appspot.com",
-      messagingSenderId: "569121363405",
-      appId: "1:569121363405:web:1c7ab280393c090c40a084"
-    };
+  const firebaseConfig={
+    apiKey:"AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
+    authDomain:"agendadigital-44dc9.firebaseapp.com",
+    projectId:"agendadigital-44dc9",
+    storageBucket:"agendadigital-44dc9.appspot.com",
+    messagingSenderId:"569121363405",
+    appId:"1:569121363405:web:1c7ab280393c090c40a084"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth=firebase.auth();
+  const db=firebase.firestore();
+  const toastWrap=document.getElementById('toastWrap');
+  function showToast(t,type='info',ms=4200){const el=document.createElement('div');el.className='toast '+(type==='success'?'success':type==='error'?'error':'info');el.textContent=t;toastWrap.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),500)},ms)}
+  let currentUser=null;
+  const userInfo=document.getElementById('userInfo');
+  const signBtn=document.getElementById('signBtn');
+  const creatorI=document.getElementById('creator');
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  //=== LOGIN REDIRECT ===
+  auth.onAuthStateChanged(u=>{
+    currentUser=u;
+    if(u){
+      const display=u.isAnonymous?'Usuário anônimo':(u.displayName||u.email||'Usuário');
+      userInfo.textContent=display;
+      signBtn.textContent=u.isAnonymous?'Login Google':'Sair';
+      if(!creatorI.value)creatorI.value=display;
+    }else{userInfo.textContent='Desconectado';signBtn.textContent='Entrar';}
+  });
+  (async function(){try{if(!auth.currentUser)await auth.signInAnonymously();}catch(e){showToast('Erro autenticação anônima: '+e.message,'error')}})();
+  auth.getRedirectResult().then(res=>{if(res.user){showToast('Login Google: '+(res.user.displayName||res.user.email),'success')}}).catch(err=>{showToast('Erro login redirect: '+err.message,'error')});
+  signBtn.addEventListener('click',async()=>{
+    if(currentUser&&!currentUser.isAnonymous){await auth.signOut();await auth.signInAnonymously();showToast('Desconectado. Anônimo.','info');return;}
+    const provider=new firebase.auth.GoogleAuthProvider();
+    try{await auth.signInWithRedirect(provider);}catch(err){showToast('Erro login Google: '+err.message,'error');}
+  });
 
-    const userInfo = document.getElementById('userInfo');
-    const signBtn = document.getElementById('signBtn');
-    const creatorI = document.getElementById('creator');
-    const toastWrap = document.getElementById('toastWrap');
-
-    function showToast(text, type='info', ms=4200){
-      const el = document.createElement('div');
-      el.className = 'toast ' + (type==='success'?'success': type==='error'?'error':'info');
-      el.textContent = text;
-      toastWrap.appendChild(el);
-      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),500); }, ms);
-    }
-
-    // === NOVO FLUXO DE LOGIN ===
-    let currentUser = null;
-
-    // Observa login/logout
-    auth.onAuthStateChanged(user => {
-      currentUser = user;
-      if(user){
-        const display = user.isAnonymous ? 'Usuário anônimo' : (user.displayName || user.email || 'Usuário');
-        userInfo.textContent = display;
-        signBtn.textContent = user.isAnonymous ? 'Login Google' : 'Sair';
-        if(!creatorI.value) creatorI.value = display;
-      } else {
-        userInfo.textContent = 'Desconectado';
-        signBtn.textContent = 'Entrar';
-      }
-    });
-
-    // Tenta autenticação anônima no início
-    (async function ensureAnon(){
-      try{
-        if(!auth.currentUser) await auth.signInAnonymously();
-      }catch(e){
-        console.error(e);
-        showToast('Erro autenticação anônima: '+e.message, 'error');
-      }
-    })();
-
-    // Captura resultado do login via redirecionamento
-    auth.getRedirectResult()
-      .then((result) => {
-        if(result.user){
-          const display = result.user.displayName || result.user.email || 'Usuário';
-          showToast('Login via redirecionamento: '+display, 'success');
-        }
-      })
-      .catch((err) => {
-        console.error('Erro getRedirectResult', err);
-        showToast('Erro no retorno do login: '+err.message, 'error');
-      });
-
-    // Botão Entrar / Sair
-    signBtn.addEventListener('click', async () => {
-      if(currentUser && !currentUser.isAnonymous){
-        await auth.signOut();
-        await auth.signInAnonymously();
-        showToast('Desconectado. Autenticado anonimamente.', 'info');
-        return;
-      }
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try{
-        await auth.signInWithRedirect(provider);
-      }catch(err){
-        console.error('Erro ao iniciar redirecionamento Google', err);
-        showToast('Erro login Google: '+err.message, 'error', 6000);
-        if(err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('auth/unauthorized-domain'))){
-          showToast('Adicione "localhost" ou seu domínio do GitHub Pages em Authentication → Domínios autorizados.', 'error', 8000);
-        }
-      }
-    });
-  </script>
-</body>
-</html>
+  //=== CRUD & FUNÇÕES ===
+  const col=db.collection('events'),logCol=db.collection('events_log');
+  const form=document.getElementById('eventForm'),titleI=document.getElementById('title'),dateI=document.getElementById('date'),timeI=document.getElementById('time'),notesI=document.getElementById('notes'),editingId=document.getElementById('editingId'),eventsList=document.getElementById('eventsList'),searchI=document.getElementById('search'),fromDate=document.getElementById('fromDate'),toDate=document.getElementById('toDate'),stats=document.getElementById('stats'),activityList=document.getElementById('activityList');
+  function escapeHtml(s){return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+  function formatDate(d){const dt=new Date(d);return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}
+  function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+  function endOfDay(d){const x=new Date(d);x.setHours(23,59,59,999);return x}
+  function truncate(s,n){return s&&s.length>n?s.slice(0,n-1)+'…':(s||'')}
+  let liveUnsub=null;function startListener(){if(liveUnsub)liveUnsub();liveUnsub=col.orderBy('date').orderBy('time').onSnapshot(s=>{const docs=[];s.forEach(d=>{const x=d.data();x.id=d.id;docs.push(x)});window.__allEvents=docs;render(docs);updateStats(docs);});}
+  startListener();
+  let logUnsub=null;function startLogListener(){if(logUnsub)logUnsub();logUnsub=logCol.orderBy('createdAt','desc').limit(12).onSnapshot(s=>{const items=[];s.forEach(d=>{const x=d.data();x.id=d.id;items.push(x)});renderActivity(items);});}
+  startLogListener();
+  function renderActivity(items){activityList.innerHTML='';if(!items.length){activityList.innerHTML='<div class="empty">Nenhuma atividade</div>';return;}
+    items.forEach(it=>{const el=document.createElement('div');el.className='activity';const when=it.createdAt&&it.createdAt.toDate?it.createdAt.toDate():new Date();el.innerHTML=`<div style="font-weight:700">${escapeHtml(it.action||'—')} — ${escapeHtml(it.title||'')}</div><div class="muted">por ${escapeHtml(it.user||'—')} • ${when.toLocaleString('pt-BR')}</div>`;activityList.appendChild(el);});}
+  function updateStats(d){stats.textContent=`${d.length} evento(s)`;}
+  function render(all){const events=all||window.__allEvents||[];const q=searchI.value.trim().toLowerCase(),from=fromDate.value?new Date(fromDate.value):null,to=toDate.value?new Date(toDate.value):null;const f=events.filter(ev=>{if(q){const h=(ev.title+' '+(ev.creator||'')+' '+(ev.notes||'')).toLowerCase();if(!h.includes(q))return false;}if(from){if(new Date(ev.date)<startOfDay(from))return false;}if(to){if(new Date(ev.date)>endOfDay(to))return false;}return true;}).sort((a,b)=>new Date(a.date+'T'+a.time)-new Date(b.date+'T'+b.time));eventsList.innerHTML='';if(!f.length){eventsList.innerHTML='<div class="muted" style="padding:12px">Nenhum evento</div>';return;}f.forEach(ev=>{const el=document.createElement('div');el.className='event';el.innerHTML=`<div class="meta"><div class="date-chip"><div style="font-weight:700">${formatDate(ev.date)}</div><div class="muted" style="font-size:12px">${ev.time||''}</div></div><div><div class="title">${escapeHtml(ev.title)}</div><div class="muted">Criador: ${escapeHtml(ev.creator||'')}</div><div class="muted" style="margin-top:6px">${escapeHtml(truncate(ev.notes,80))}</div></div></div><div style="display:flex;gap:8px"><button class="btn btn-ghost small" data-id="${ev.id}" data-action="edit">Editar</button><button class="btn btn-ghost small" data-id="${ev.id}" data-action="delete">Excluir</button></div>`;eventsList.appendChild(el);});}
+  form.addEventListener('submit',async e=>{e.preventDefault();const id=editingId.value,data={title:titleI.value.trim(),date:dateI.value,time:timeI.value,creator:creatorI.value.trim()||(currentUser&&(currentUser.displayName||'Usuário')),notes:notesI.value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};try{if(id){await col.doc(id).update(data);await logCol.add({action:'Atualizado',title:data.title,user:data.creator,createdAt:firebase.firestore.FieldValue.serverTimestamp()});showToast('Atualizado','success');}else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();const docRef=await col.add(data);await logCol.add({action:'Criado',title:data.title,user:data.creator,createdAt:firebase.firestore.FieldValue.serverTimestamp(),refId:docRef.id});showToast('Criado','success');}
