@@ -14,17 +14,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body { font-family: 'Inter', sans-serif; margin: 20px; background:#f5f6fb; color:#222; }
-h1 { color:#333; }
-input, textarea, button { margin: 4px 0; padding: 6px; font-size:14px; }
-button { cursor:pointer; }
-table { border-collapse: collapse; width: 100%; margin-top:10px; }
-th, td { border: 1px solid #ccc; padding: 8px; }
-th { background: #f0f0f0; }
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 20px;
+  background: #f5f6fb;
+  color: #222;
+}
+h1 { color: #333; }
+input, textarea, button {
+  margin: 4px 0;
+  padding: 6px;
+  font-size: 14px;
+}
+button {
+  cursor: pointer;
+  background: #4285f4;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+button:hover { background: #3367d6; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+th {
+  background: #f0f0f0;
+}
 .toast {
-  position: fixed; right: 15px; bottom: 15px;
-  background: #333; color: #fff; padding: 10px 14px;
-  border-radius: 8px; opacity: 0; transition: opacity 0.3s ease;
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+  background: #333;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 .toast.show { opacity: 1; }
 </style>
@@ -49,7 +81,13 @@ th { background: #f0f0f0; }
 <h2>Eventos</h2>
 <table>
   <thead>
-    <tr><th>Título</th><th>Data</th><th>Hora</th><th>Criador</th><th>Descrição</th></tr>
+    <tr>
+      <th>Título</th>
+      <th>Data</th>
+      <th>Hora</th>
+      <th>Criador</th>
+      <th>Descrição</th>
+    </tr>
   </thead>
   <tbody id="eventsBody"><tr><td colspan="5">Carregando eventos...</td></tr></tbody>
 </table>
@@ -60,16 +98,17 @@ th { background: #f0f0f0; }
 <div id="toast" class="toast"></div>
 
 <script>
+// 🔹 Configuração Firebase
 const firebaseConfig = {
-  // ⚠️ Substitua pelos dados do seu projeto Firebase
   apiKey: "AIzaSyAIdzJHTsvIpUaHszzX8q6jPfR3sh9IfOI",
   authDomain: "agendadigital-44dc9.firebaseapp.com",
   projectId: "agendadigital-44dc9",
-  storageBucket: "agendadigital-44dc9.firebasestorage.app",
+  storageBucket: "agendadigital-44dc9.appspot.com",
   messagingSenderId: "569121363405",
   appId: "1:569121363405:web:1c7ab280393c090c40a084"
 };
 
+// 🔹 Inicialização Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -86,23 +125,14 @@ const descI = document.getElementById('desc');
 
 let currentUser = null;
 
+// 🔹 Toast de mensagens
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// 🔹 Trata o retorno do login via redirect (Google)
-auth.getRedirectResult().then(result => {
-  if (result.user) {
-    showToast("Login Google bem-sucedido!");
-  }
-}).catch(err => {
-  console.error(err);
-  showToast("Erro ao concluir login Google");
-});
-
-// 🔹 Mantém login persistente
+// 🔹 Persistência local de login
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 // 🔹 Detecta mudanças de autenticação
@@ -133,9 +163,10 @@ loginBtn.addEventListener('click', async () => {
     provider.addScope('profile');
     provider.addScope('email');
     try {
-      await auth.signInWithRedirect(provider);
+      const result = await auth.signInWithPopup(provider);
+      showToast(`Bem-vindo, ${result.user.displayName}!`);
     } catch (e) {
-      console.error(e);
+      console.error("Erro no login Google:", e);
       showToast("Erro no login Google");
     }
   }
@@ -220,4 +251,3 @@ document.getElementById('pdfBtn').addEventListener('click', async () => {
 </script>
 </body>
 </html>
-
