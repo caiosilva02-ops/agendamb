@@ -226,28 +226,41 @@ db.collection('events')
 
 // 🔹 Gerar PDF com todos os eventos
 document.getElementById('pdfBtn').addEventListener('click', async () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 10;
+  try {
+    const { jsPDF } = window.jspdf; // garante compatibilidade
+    const doc = new jsPDF();
+    let y = 10;
 
-  doc.setFontSize(16);
-  doc.text('Agenda de Eventos', 10, y);
-  y += 10;
-  doc.setFontSize(12);
+    doc.setFontSize(16);
+    doc.text('Agenda de Eventos', 10, y);
+    y += 10;
+    doc.setFontSize(12);
 
-  const snapshot = await db.collection('events').orderBy('date','asc').orderBy('time','asc').get();
-  snapshot.forEach(d => {
-    const e = d.data();
-    doc.text(`Título: ${e.title}`, 10, y); y += 6;
-    doc.text(`Data: ${e.date} Hora: ${e.time || ''}`, 10, y); y += 6;
-    doc.text(`Criador: ${e.creator}`, 10, y); y += 6;
-    doc.text(`Descrição: ${e.desc}`, 10, y); y += 8;
-    if (y > 270) { doc.addPage(); y = 10; }
-  });
+    const snapshot = await db.collection('events').orderBy('date','asc').orderBy('time','asc').get();
 
-  doc.save('agenda.pdf');
-  showToast("PDF gerado!");
+    if (snapshot.empty) {
+      showToast("Nenhum evento para gerar PDF");
+      return;
+    }
+
+    snapshot.forEach(d => {
+      const e = d.data();
+      doc.text(`Título: ${e.title || ''}`, 10, y); y += 6;
+      doc.text(`Data: ${e.date || ''} Hora: ${e.time || ''}`, 10, y); y += 6;
+      doc.text(`Criador: ${e.creator || ''}`, 10, y); y += 6;
+      doc.text(`Descrição: ${e.desc || ''}`, 10, y); y += 8;
+      if (y > 270) { doc.addPage(); y = 10; }
+    });
+
+    doc.save('agenda.pdf');
+    showToast("PDF gerado!");
+  } catch (err) {
+    console.error("Erro ao gerar PDF:", err);
+    showToast("Erro ao gerar PDF");
+  }
 });
+
 </script>
 </body>
 </html>
+
